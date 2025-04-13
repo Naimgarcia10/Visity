@@ -1,0 +1,28 @@
+<div id="title-container">
+  <h1 id="title">Iniciar Sesión</h1>
+</div>
+
+<div id="form-container">
+  <form [formGroup]="formLogin" (ngSubmit)="loginAction()">
+    <label for="email">Email:</label>
+    <input type="email" id="email" formControlName="email" required>
+    <div class="alert-danger" *ngIf="email.invalid && email.touched">
+      <span *ngIf="email.hasError('required')">El email es obligatorio</span>
+      <span *ngIf="email.hasError('email')">El email no es válido</span>
+    </div>
+
+    <label for="password">Contraseña:</label>
+    <input type="password" id="password" formControlName="password" required>
+    <div class="alert-danger" *ngIf="password.invalid && password.touched">
+      <span *ngIf="password.hasError('required')">La contraseña es obligatoria</span>
+      <span *ngIf="password.hasError('minlength')">La contraseña debe tener al menos 6 caracteres</span>
+    </div>
+
+    <a routerLink="/register">Registrarse</a>
+    <a href="#" id="reset-password" (click)="resetPassword()">¿Olvidaste tu contraseña?</a>
+    <button type="submit" class="user-button" [disabled]="formLogin.invalid">Iniciar Sesión</button>
+  </form>
+  <p id="temporary-message-login">{{ temporaryMessage }}</p>
+</div>
+
+<!-- <img src="{{imageUrl}}" alt="Imagen desde Firebase Storage"> -->
