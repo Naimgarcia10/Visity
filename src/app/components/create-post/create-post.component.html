@@ -1,0 +1,55 @@
+<div class="create-post-container">
+  <form [formGroup]="postForm" (ngSubmit)="submitPost()">
+    <label for="text">Texto:</label>
+    <textarea id="text" formControlName="text" rows="4" placeholder="Escribe algo..."></textarea>
+    <div *ngIf="postForm.get('text')?.invalid && postForm.get('text')?.touched" class="error">
+      <span *ngIf="postForm.get('text')?.hasError('required')">El texto es obligatorio.</span>
+      <span *ngIf="postForm.get('text')?.hasError('maxLength')">El texto no puede exceder los 500 caracteres.</span>
+    </div>
+
+    <label>Tipo de Viaje:</label>
+    <div *ngFor="let tag of tags.tipoViaje">
+      <input type="checkbox" [value]="tag.label" (change)="onCheckboxChange('tipoViaje', $event)"> {{ tag.label }}
+    </div>
+
+    <label>Presupuesto:</label>
+    <div *ngFor="let tag of tags.presupuesto">
+      <input type="checkbox" [value]="tag.label" (change)="onCheckboxChange('presupuesto', $event)"> {{ tag.label }}
+    </div>
+
+    <label>Clima:</label>
+    <div *ngFor="let tag of tags.clima">
+      <input type="checkbox" [value]="tag.label" (change)="onCheckboxChange('clima', $event)"> {{ tag.label }}
+    </div>
+
+    <div class="search-container" ngSkipHydration>
+      <input id="search-bar" type="text" placeholder="Buscar destino..." />
+      <button (click)="finalizarItinerario()">OK</button>
+    </div>
+
+    <button (click)="finalizarItinerarioYGenerarImagen()">Finalizar Itinerario</button>
+
+    <div class="itinerary-preview" *ngIf="itinerarioFinalizado">
+      <h3>Itinerario:</h3>
+      <ul>
+        <li *ngFor="let destino of waypoints">{{ destino.location }}</li>
+      </ul>
+    </div>
+
+    <div *ngIf="itinerarioImagenUrl">
+      <h3>Vista previa del itinerario:</h3>
+      <img [src]="itinerarioImagenUrl" alt="Itinerario" />
+      <p><a [href]="googleMapsUrl" target="_blank">Abrir en Google Maps</a></p>
+    </div>
+
+    <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;" ngSkipHydration></div>
+
+    <label for="image">Imagen:</label>
+    <input type="file" id="image" (change)="onImageUpload($event)">
+    <div class="image-preview" *ngIf="imageUrl">
+      <img [src]="imageUrl" alt="Vista previa de la imagen">
+    </div>
+
+    <button type="submit" [disabled]="postForm.invalid">Publicar</button>
+  </form>
+</div>
