@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { environment } from '../../environment/firebaseConnection';
 
 declare const google: any;
+const apiKey = environment.googleMapsApiKey;
 
 export interface Waypoint {
   location: string;
@@ -43,7 +45,7 @@ export class GoogleMapsService {
       }
 
       const script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBAQcrgc23ELlI5I8xhIQ2WWY4KP7BrKX8&libraries=places';
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
       script.async = true;
       script.defer = true;
       script.onload = () => {
@@ -197,7 +199,7 @@ export class GoogleMapsService {
     ).join('&');
     const path = `path=color:0x0000ff|weight:5|${this.waypoints.map(wp => wp.location).join('|')}`;
 
-    return `${staticMapBaseUrl}?size=${width}x${height}&maptype=roadmap&${markers}&${path}&key=AIzaSyBAQcrgc23ELlI5I8xhIQ2WWY4KP7BrKX8`;
+    return `${staticMapBaseUrl}?size=${width}x${height}&maptype=roadmap&${markers}&${path}&key=${apiKey}`;
   }
 
   /**
