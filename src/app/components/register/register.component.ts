@@ -49,19 +49,6 @@ export class RegisterComponent implements OnInit {
       profilePic: ''
     });
 
-/*   // Mejor: usa debounceTime para esperar a que el usuario deje de escribir
-  this.username.valueChanges
-    .pipe(
-      debounceTime(500),
-      distinctUntilChanged()
-    )
-    .subscribe(async (value: string) => {
-      if (value && value.length >= 3) {
-        this.isValidUsername = await this.auth.isUsernameAvailable(value);
-      } else {
-        this.isValidUsername = true;
-      }
-    });*/
   } 
 
   // Getters para acceder a los controles del formulario
@@ -160,7 +147,7 @@ export class RegisterComponent implements OnInit {
     if (e.target.files && e.target.files[0]) {
       try {
         const file = e.target.files[0];
-        this.imageUrl = await this.storageMng.uploadFile(file);
+        this.imageUrl = await this.storageMng.uploadFile(file, 'profilePics'); // Sube la imagen a Firebase Storage
         this.profilePic.setValue(this.imageUrl); // Establece la URL de la imagen en el formulario
         this.temporaryMessage = 'Foto de perfil subida con éxito';
       } catch (error) {

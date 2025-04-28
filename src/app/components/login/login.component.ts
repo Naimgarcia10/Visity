@@ -4,14 +4,14 @@ import { AuthService } from '../../shared/auth.service';
 import { UserModel } from '../../models/user_model';
 import { CommonModule } from '@angular/common';
 import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
-import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterModule]
+  imports: [ReactiveFormsModule, CommonModule]
 })
 export class LoginComponent implements OnInit {
   user: UserModel = new UserModel();
@@ -19,7 +19,7 @@ export class LoginComponent implements OnInit {
   imageUrl: string = 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2F1742213128185_messi_pic.jpg?alt=media&token=9f6d3ad0-d583-4a4d-8e94-2d16a28150f2';
   temporaryMessage: string = '';
 
-  constructor(private fb: FormBuilder, private firebaseAuth: Auth) {}
+  constructor(private fb: FormBuilder, private firebaseAuth: Auth, private router:Router) {}
 
   ngOnInit() {
     this.user = new UserModel();
@@ -49,7 +49,7 @@ export class LoginComponent implements OnInit {
         sessionStorage.setItem('user', JSON.stringify(userCredential.user));
         setTimeout(() => {
           this.temporaryMessage = '';
-          location.href = '/'; // Redirige a la página principal
+          this.router.navigate(['/home']);
         }, 3000);
       } catch (error: any) {
         const errorCode = error.code;

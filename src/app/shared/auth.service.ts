@@ -4,6 +4,7 @@ import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updat
 import { Firestore, collection, doc, setDoc, query, where, getDocs, updateDoc, getDoc } from '@angular/fire/firestore';
 import { BehaviorSubject } from 'rxjs';
 import { UserModel } from '../models/user_model';
+import { FireStorageMngService } from './fire-storage-mng.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,12 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<UserModel | null> = new BehaviorSubject<UserModel | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private auth: Auth, private router: Router, private firestore: Firestore) { }
+  constructor(
+    private auth: Auth, 
+    private router: Router, 
+    private firestore: Firestore,
+    private storageMng: FireStorageMngService,
+  ) { }
 
   logout() {
     this.auth.signOut();

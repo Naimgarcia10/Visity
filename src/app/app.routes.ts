@@ -17,6 +17,10 @@ export const routes: Routes = [
         loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
     },
     {
+        path: 'feed',
+        loadComponent: () => import('./components/feed/feed.component').then(m => m.FeedComponent),
+    },
+    {
         path: '**', redirectTo: 'login', pathMatch: 'full'
     },
     

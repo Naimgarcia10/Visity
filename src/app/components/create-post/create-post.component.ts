@@ -3,8 +3,9 @@ import { FormBuilder, FormGroup, Validators, FormArray, FormControl } from '@ang
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-
-declare const google: any; // Declaración para usar el objeto global de Google Maps
+import { Router } from '@angular/router';
+import { GoogleMapsService, Waypoint } from '../../shared/maps-service';
+import { PostService } from '../../shared/post-service'; // Importar el servicio
 
 @Component({
   selector: 'app-create-post',
@@ -12,10 +13,15 @@ declare const google: any; // Declaración para usar el objeto global de Google 
   styleUrls: ['./create-post.component.css'],
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  host: { 'ngSkipHydration': '' } // Evitar problemas de hidratación
+  host: { 'ngSkipHydration': '' }
 })
 export class CreatePostComponent implements OnInit {
   postForm: FormGroup;
+  isSubmitting = false;
+  imageFile: File | null = null;
+  selectedPresupuesto: string | null = null;
+  selectedClima: string | null = null;
+
   tags = {
     tipoViaje: [
       { label: 'Mochilero', selected: false },
@@ -36,23 +42,27 @@ export class CreatePostComponent implements OnInit {
     ]
   };
   imageUrl: string | null = null;
-  map: any;
-  directionsService: any;
-  directionsRenderer: any;
-  waypoints: { location: string; stopover: boolean }[] = [];
-  searchBox: any;
+  waypoints: Waypoint[] = [];
   itinerarioFinalizado: boolean = false;
   itinerarioImagenUrl: string | null = null;
   googleMapsUrl: string | null = null;
+  statusMessage: string = '';
+  showStatusMessage: boolean = false;
+  imageFiles: File[] = [];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private mapsService: GoogleMapsService,
+    private postService: PostService,
+    private router: Router
+  ) {
     this.postForm = this.fb.group({
       text: ['', [Validators.required, Validators.maxLength(500)]],
       image: [''],
       tipoViaje: this.fb.array([]),
-      presupuesto: this.fb.array([]),
-      clima: this.fb.array([]),
-      itinerary: [[]] // Campo para almacenar el itinerario
+      presupuesto: [''],
+      clima: [''],
+      itinerary: [[]]
     });
   }
 
@@ -62,132 +72,59 @@ export class CreatePostComponent implements OnInit {
       return;
     }
 
-    this.loadGoogleMapsScript().then(() => {
-      this.initMap();
-      this.initSearchBox();
+    this.mapsService.loadGoogleMapsScript().then(() => {
+      // Inicializar el mapa después de cargar la API
+      setTimeout(() => {
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+          this.mapsService.initMap(mapElement);
+          
+          const searchBar = document.getElementById('search-bar') as HTMLInputElement;
+          if (searchBar) {
+            this.mapsService.initSearchBox(searchBar);
+          }
+        }
+      }, 500);
     }).catch(error => {
       console.error('Error al cargar Google Maps:', error);
     });
-  }
 
-  private loadGoogleMapsScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (typeof window === 'undefined' || typeof document === 'undefined') {
-        reject(new Error('El entorno no es compatible con el navegador.'));
-        return;
-      }
-
-      if (typeof google !== 'undefined') {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBAQcrgc23ELlI5I8xhIQ2WWY4KP7BrKX8&libraries=places';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => resolve();
-      script.onerror = (error) => reject(error);
-      document.head.appendChild(script);
-    });
-  }
-
-  initMap(): void {
-    this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
-      center: { lat: 34.0522, lng: -118.2437 }, // Coordenadas iniciales (Los Ángeles)
-      zoom: 8
-    });
-
-    this.directionsService = new google.maps.DirectionsService();
-    this.directionsRenderer = new google.maps.DirectionsRenderer();
-    this.directionsRenderer.setMap(this.map);
-
-    this.map.addListener('click', (event: any) => {
-      const location = {
-        lat: event.latLng.lat(),
-        lng: event.latLng.lng()
-      };
-      this.addWaypoint(location);
-    });
-  }
-
-  initSearchBox(): void {
-    const input = document.getElementById('search-bar') as HTMLInputElement;
-    this.searchBox = new google.maps.places.SearchBox(input);
-
-    this.searchBox.addListener('places_changed', () => {
-      const places = this.searchBox.getPlaces();
-      if (places && places.length > 0) {
-        const place = places[0];
-        const location = {
-          lat: place.geometry.location.lat(),
-          lng: place.geometry.location.lng()
-        };
-
-        // Centrar el mapa en el destino seleccionado
-        this.map.setCenter(location);
-        this.map.setZoom(12);
-
-        // Añadir el destino al itinerario
-        this.addWaypoint(location);
+    // Suscribirse para recibir actualizaciones de waypoints
+    this.mapsService.isMapInitialized().subscribe(initialized => {
+      if (initialized) {
+        // Actualizar el formulario cuando cambian los waypoints
+        this.waypoints = this.mapsService.getWaypoints();
+        this.postForm.get('itinerary')?.setValue(this.waypoints);
       }
     });
-  }
-
-  addWaypoint(location: { lat: number; lng: number }): void {
-    this.waypoints.push({ location: `${location.lat},${location.lng}`, stopover: true });
-    this.updateRoute();
-  }
-
-  updateRoute(): void {
-    if (this.waypoints.length < 2) return;
-
-    const origin = this.waypoints[0].location;
-    const destination = this.waypoints[this.waypoints.length - 1].location;
-    const waypoints = this.waypoints.slice(1, -1);
-
-    this.directionsService.route(
-      {
-        origin,
-        destination,
-        waypoints,
-        travelMode: google.maps.TravelMode.DRIVING
-      },
-      (result: any, status: any) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-          this.directionsRenderer.setDirections(result);
-          this.postForm.get('itinerary')?.setValue(this.waypoints);
-        } else {
-          console.error('Error al calcular la ruta:', status);
-        }
-      }
-    );
   }
 
   finalizarItinerario(): void {
-    this.itinerarioFinalizado = true;
+    this.waypoints = this.mapsService.getWaypoints();
   }
 
   finalizarItinerarioYGenerarImagen(): void {
+    this.waypoints = this.mapsService.getWaypoints();
+    
     if (this.waypoints.length === 0) {
-      console.warn('No hay destinos en el itinerario.');
+      this.mostrarMensaje('No hay destinos en el itinerario.');
       return;
     }
 
     // Generar URL de Google Maps
-    const baseUrl = 'https://www.google.com/maps/dir/?api=1';
-    const origin = this.waypoints[0].location;
-    const destination = this.waypoints[this.waypoints.length - 1].location;
-    const waypoints = this.waypoints.slice(1, -1).map(wp => wp.location).join('|');
+    this.googleMapsUrl = this.mapsService.generateGoogleMapsUrl();
 
-    this.googleMapsUrl = `${baseUrl}&origin=${origin}&destination=${destination}&waypoints=${waypoints}`;
+    // Generar imagen del itinerario
+    this.itinerarioImagenUrl = this.mapsService.generateStaticMapImageUrl();
+    this.itinerarioFinalizado = true;
+  }
 
-    // Generar imagen del itinerario con Google Maps Static API
-    const staticMapBaseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
-    const markers = this.waypoints.map((wp, index) => `markers=label:${String.fromCharCode(65 + index)}|${wp.location}`).join('&');
-    const path = `path=color:0x0000ff|weight:5|${this.waypoints.map(wp => wp.location).join('|')}`;
-
-    this.itinerarioImagenUrl = `${staticMapBaseUrl}?size=600x400&maptype=roadmap&${markers}&${path}&key=AIzaSyBAQcrgc23ELlI5I8xhIQ2WWY4KP7BrKX8`;
+  mostrarMensaje(mensaje: string, duracion: number = 3000): void {
+    this.statusMessage = mensaje;
+    this.showStatusMessage = true;
+    setTimeout(() => {
+      this.showStatusMessage = false;
+    }, duracion);
   }
 
   onCheckboxChange(category: string, event: any): void {
@@ -200,41 +137,137 @@ export class CreatePostComponent implements OnInit {
     }
   }
 
+  onRadioChange(category: string, value: string): void {
+    // Actualizar el valor en el FormGroup
+    this.postForm.get(category)?.setValue(value);
+    
+    // Actualizar el estado selected en el objeto tags
+    if (category === 'presupuesto') {
+      this.tags.presupuesto.forEach(tag => tag.selected = false);
+      const tagIndex = this.tags.presupuesto.findIndex(tag => tag.label === value);
+      if (tagIndex !== -1) {
+        this.tags.presupuesto[tagIndex].selected = true;
+      }
+      this.selectedPresupuesto = value;
+    } else if (category === 'clima') {
+      this.tags.clima.forEach(tag => tag.selected = false);
+      const tagIndex = this.tags.clima.findIndex(tag => tag.label === value);
+      if (tagIndex !== -1) {
+        this.tags.clima[tagIndex].selected = true;
+      }
+      this.selectedClima = value;
+    }
+  }
+
   getSelectedTags(): string[] {
     return [
-      ...this.postForm.get('tipoViaje')?.value,
-      ...this.postForm.get('presupuesto')?.value,
-      ...this.postForm.get('clima')?.value
-    ];
+      ...this.postForm.get('tipoViaje')?.value || [],
+      this.selectedPresupuesto || '',
+      this.selectedClima || ''
+    ].filter(tag => tag !== '');
   }
 
   onImageUpload(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      // Limitar a 10 imágenes
+      if (files.length > 10) {
+        this.mostrarMensaje('Solo puedes subir hasta 10 imágenes');
+        return;
+      }
+      
+      // Guardar todos los archivos seleccionados
+      this.imageFiles = Array.from(files);
+      
+      // Usar la primera imagen como vista previa
+      this.imageFile = files[0];
       const reader = new FileReader();
       reader.onload = () => {
         this.imageUrl = reader.result as string;
       };
-      reader.readAsDataURL(file);
+      if (this.imageFile) {
+        reader.readAsDataURL(this.imageFile);
+      }
+      
+      // Mostrar mensaje informativo
+      if (files.length > 1) {
+        this.mostrarMensaje(`Se han seleccionado ${files.length} imágenes`);
+      }
     }
   }
 
-  submitPost(): void {
+  async submitPost(): Promise<void> {
     if (this.postForm.valid) {
-      const postData = {
-        text: this.postForm.get('text')?.value,
-        tags: this.getSelectedTags(),
-        image: this.imageUrl,
-        itinerary: this.postForm.get('itinerary')?.value
-      };
-      console.log('Post creado:', postData);
-      this.postForm.reset();
-      this.tags.tipoViaje.forEach(tag => (tag.selected = false));
-      this.tags.presupuesto.forEach(tag => (tag.selected = false));
-      this.tags.clima.forEach(tag => (tag.selected = false));
-      this.imageUrl = null;
-      this.waypoints = [];
-      this.directionsRenderer.setDirections({ routes: [] });
+      try {
+        this.isSubmitting = true;
+        this.statusMessage = 'Publicando...';
+        this.showStatusMessage = true;
+        
+        // Obtener los valores del formulario
+        const content = this.postForm.get('text')?.value;
+        const tipoViaje = this.postForm.get('tipoViaje')?.value || [];
+        const presupuesto = this.selectedPresupuesto || '';
+        const clima = this.selectedClima || '';
+        
+        // Crear un array con todas las imágenes (incluida la del itinerario si existe)
+        const imagesToUpload: File[] = [...this.imageFiles];
+        
+        // Convertir la imagen del itinerario a File si existe
+        if (this.itinerarioImagenUrl) {
+          try {
+            const response = await fetch(this.itinerarioImagenUrl);
+            const blob = await response.blob();
+            const itineraryFile = new File([blob], 'itinerary.png', { type: 'image/png' });
+            imagesToUpload.push(itineraryFile);
+          } catch (error) {
+            console.error('Error al convertir la imagen del itinerario:', error);
+          }
+        }
+        
+        // Usar el servicio para crear el post
+        const postId = await this.postService.createPost(
+          content,
+          imagesToUpload,
+          this.googleMapsUrl || '',
+          tipoViaje,
+          presupuesto,
+          clima
+        );
+        
+        console.log('Post creado con ID:', postId);
+        this.mostrarMensaje('¡Post publicado con éxito!', 2000);
+        
+        // Resetear el formulario y los estados
+        this.resetFormAndStates();
+        
+        // Redirigir a la página principal
+        setTimeout(() => {
+          this.router.navigate(['/feed']);
+        }, 2000);
+      } catch (error) {
+        console.error('Error al crear el post:', error);
+        this.mostrarMensaje('Error al publicar el post. Por favor, inténtalo de nuevo.', 3000);
+      } finally {
+        this.isSubmitting = false;
+      }
     }
+  }
+  
+  // Método para resetear el formulario y todos los estados
+  private resetFormAndStates(): void {
+    this.postForm.reset();
+    this.tags.tipoViaje.forEach(tag => (tag.selected = false));
+    this.tags.presupuesto.forEach(tag => (tag.selected = false));
+    this.tags.clima.forEach(tag => (tag.selected = false));
+    this.imageUrl = null;
+    this.imageFile = null;
+    this.imageFiles = [];
+    this.waypoints = [];
+    this.itinerarioFinalizado = false;
+    this.itinerarioImagenUrl = null;
+    this.googleMapsUrl = null;
+    
+    // Limpiar el mapa
+    this.mapsService.clearWaypoints();
   }
 }

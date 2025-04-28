@@ -9,6 +9,20 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Estilos para las secciones del formulario */
+.form-section {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.form-section h3 {
+  margin-bottom: 15px;
+  color: #007bff;
+  font-size: 18px;
+  font-weight: 500;
+}
+
 /* Estilos para las etiquetas y campos de entrada */
 label {
   display: block;
@@ -27,24 +41,30 @@ textarea, input[type="text"], input[type="file"] {
   box-sizing: border-box;
 }
 
-button {
-  padding: 10px 15px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+/* Estilos para los checkboxes y radio buttons */
+.tag-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
-button:hover {
-  background-color: #0056b3;
+.tag-option {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  flex-basis: 48%;
 }
 
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+.tag-option input[type="checkbox"],
+.tag-option input[type="radio"] {
+  margin-right: 8px;
+}
+
+.tag-option label {
+  display: inline;
+  margin-bottom: 0;
+  font-weight: normal;
 }
 
 /* Estilos para las etiquetas */
@@ -75,6 +95,30 @@ button:disabled {
   color: #cc0000;
 }
 
+/* Estilos para el mapa y la búsqueda */
+.map-container {
+  height: 300px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+
+.search-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.search-container input {
+  flex-grow: 1;
+  margin-bottom: 0;
+}
+
+.search-container button {
+  flex-shrink: 0;
+}
+
 /* Estilos para la vista previa de la imagen */
 .image-preview {
   margin-bottom: 15px;
@@ -84,4 +128,89 @@ button:disabled {
   max-width: 100%;
   height: auto;
   border-radius: 4px;
+}
+
+/* Estilos para la vista previa del itinerario */
+.itinerary-preview {
+  margin: 15px 0;
+  padding: 15px;
+  background-color: #f0f7ff;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+}
+
+.itinerary-preview h3 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.itinerary-preview ul {
+  padding-left: 20px;
+}
+
+.itinerary-preview li {
+  margin-bottom: 5px;
+}
+
+/* Estilos para los botones de acción */
+button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.primary-button {
+  background-color: #28a745;
+  padding: 12px 20px;
+  font-size: 16px;
+}
+
+.secondary-button {
+  background-color: #6c757d;
+}
+
+/* Estilos para mensajes de estado */
+.status-message {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 4px;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.status-message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
