@@ -1,1 +1,7 @@
-<p>feed works!</p>
+<div class="feed-container">
+  <app-post *ngFor="let post of posts" [post]="post"></app-post>
+</div>
+<p *ngIf="!posts.length">No hay publicaciones disponibles.</p>
+<p>HOLA</p>
+
+<button (click)="logout()">Cerrar Sesion</button>

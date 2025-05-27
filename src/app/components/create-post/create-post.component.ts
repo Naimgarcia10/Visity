@@ -4,8 +4,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GoogleMapsService, Waypoint } from '../../shared/maps-service';
-import { PostService } from '../../shared/post-service'; // Importar el servicio
+import { GoogleMapsService, Waypoint } from '../../shared/maps.service';
+import { PostService } from '../../shared/post.service'; // Importar el servicio
 
 @Component({
   selector: 'app-create-post',
@@ -66,6 +66,15 @@ export class CreatePostComponent implements OnInit {
     });
   }
 
+  /**
+   * Método del ciclo de vida de Angular que se ejecuta al inicializar el componente.
+   * 
+   * - Verifica si el entorno actual es del servidor para evitar la inicialización del mapa en ese caso.
+   * - Carga el script de Google Maps de manera asíncrona y, una vez cargado, inicializa el mapa y la barra de búsqueda.
+   * - Se suscribe a los cambios en los waypoints para actualizar el formulario correspondiente.
+   * 
+   * @returns {void}
+   */
   ngOnInit(): void {
     if (typeof window === 'undefined' || typeof document === 'undefined') {
       console.warn('El entorno actual es del servidor. El mapa no se inicializará.');
@@ -99,10 +108,30 @@ export class CreatePostComponent implements OnInit {
     });
   }
 
+  /**
+   * Finaliza el itinerario actual realizando las siguientes acciones:
+   * - Obtiene los puntos de referencia (waypoints) desde el servicio de mapas.
+   * - Limpia la caja de búsqueda del servicio de mapas.
+   *
+   * @returns {void} No devuelve ningún valor.
+   */
   finalizarItinerario(): void {
     this.waypoints = this.mapsService.getWaypoints();
+    this.mapsService.clearSearchBox(); 
   }
 
+  /**
+   * Finaliza el itinerario actual y genera una imagen representativa del mismo.
+   * 
+   * Este método realiza las siguientes acciones:
+   * 1. Obtiene los puntos de referencia (waypoints) del itinerario desde el servicio de mapas.
+   * 2. Verifica si hay destinos en el itinerario. Si no hay, muestra un mensaje al usuario y detiene la ejecución.
+   * 3. Genera una URL de Google Maps basada en los puntos de referencia del itinerario.
+   * 4. Genera una URL de una imagen estática del mapa que representa el itinerario.
+   * 5. Marca el itinerario como finalizado.
+   * 
+   * @returns {void} No retorna ningún valor.
+   */
   finalizarItinerarioYGenerarImagen(): void {
     this.waypoints = this.mapsService.getWaypoints();
     
@@ -119,6 +148,13 @@ export class CreatePostComponent implements OnInit {
     this.itinerarioFinalizado = true;
   }
 
+  /**
+   * Muestra un mensaje de estado temporal en la interfaz de usuario.
+   *
+   * @param mensaje - El mensaje que se mostrará al usuario.
+   * @param duracion - La duración en milisegundos durante la cual el mensaje será visible. 
+   *                    Por defecto es 3000 ms (3 segundos).
+   */
   mostrarMensaje(mensaje: string, duracion: number = 3000): void {
     this.statusMessage = mensaje;
     this.showStatusMessage = true;
@@ -127,6 +163,18 @@ export class CreatePostComponent implements OnInit {
     }, duracion);
   }
 
+  /**
+   * Maneja el evento de cambio de estado de un checkbox y actualiza el FormArray correspondiente
+   * en el formulario reactivo.
+   *
+   * @param category - El nombre de la categoría asociada al FormArray en el formulario.
+   * @param event - El evento que contiene información sobre el estado del checkbox.
+   *
+   * - Si el checkbox está marcado (`event.target.checked` es `true`), se agrega un nuevo
+   *   FormControl con el valor del checkbox al FormArray.
+   * - Si el checkbox está desmarcado, se busca el índice del FormControl correspondiente
+   *   en el FormArray y se elimina.
+   */
   onCheckboxChange(category: string, event: any): void {
     const formArray: FormArray = this.postForm.get(category) as FormArray;
     if (event.target.checked) {
@@ -137,6 +185,17 @@ export class CreatePostComponent implements OnInit {
     }
   }
 
+  /**
+   * Maneja el evento de cambio en un botón de opción (radio button).
+   * 
+   * @param category - La categoría asociada al botón de opción (por ejemplo, 'presupuesto' o 'clima').
+   * @param value - El valor seleccionado del botón de opción.
+   * 
+   * Este método realiza las siguientes acciones:
+   * - Actualiza el valor correspondiente en el `FormGroup` asociado al formulario.
+   * - Ajusta el estado `selected` de los objetos en el arreglo `tags` para reflejar la selección actual.
+   * - Actualiza las propiedades `selectedPresupuesto` o `selectedClima` según la categoría seleccionada.
+   */
   onRadioChange(category: string, value: string): void {
     // Actualizar el valor en el FormGroup
     this.postForm.get(category)?.setValue(value);
@@ -159,6 +218,12 @@ export class CreatePostComponent implements OnInit {
     }
   }
 
+  /**
+   * Obtiene una lista de etiquetas seleccionadas basadas en los valores del formulario y las selecciones actuales.
+   *
+   * @returns {string[]} Un arreglo de cadenas que representa las etiquetas seleccionadas. 
+   *                     Se excluyen las etiquetas vacías.
+   */
   getSelectedTags(): string[] {
     return [
       ...this.postForm.get('tipoViaje')?.value || [],
@@ -167,6 +232,20 @@ export class CreatePostComponent implements OnInit {
     ].filter(tag => tag !== '');
   }
 
+  /**
+   * Maneja el evento de carga de imágenes desde un input de tipo archivo.
+   * 
+   * @param event - El evento generado al seleccionar archivos.
+   * 
+   * - Limita la cantidad de imágenes seleccionadas a un máximo de 10.
+   * - Guarda los archivos seleccionados en la propiedad `imageFiles`.
+   * - Usa la primera imagen seleccionada como vista previa y genera su URL.
+   * - Muestra un mensaje informativo si se seleccionan múltiples imágenes.
+   * 
+   * @remarks
+   * Si se seleccionan más de 10 imágenes, se muestra un mensaje de advertencia
+   * y no se procesan los archivos.
+   */
   onImageUpload(event: any): void {
     const files = event.target.files;
     if (files && files.length > 0) {
@@ -196,6 +275,22 @@ export class CreatePostComponent implements OnInit {
     }
   }
 
+  /**
+   * Envía un nuevo post utilizando los datos proporcionados en el formulario.
+   * 
+   * Este método realiza las siguientes acciones:
+   * - Valida el formulario antes de proceder.
+   * - Obtiene los valores del formulario, incluyendo texto, tipo de viaje, presupuesto y clima.
+   * - Prepara las imágenes para subir, incluyendo la conversión de la imagen del itinerario si está disponible.
+   * - Llama al servicio `postService` para crear el post con los datos recopilados.
+   * - Muestra mensajes de estado durante el proceso (publicando, éxito o error).
+   * - Resetea el formulario y los estados después de completar la operación.
+   * - Redirige al usuario al feed principal tras un breve retraso si la publicación es exitosa.
+   * 
+   * @returns {Promise<void>} Una promesa que se resuelve cuando el proceso de publicación se completa.
+   * 
+   * @throws {Error} Si ocurre un error durante la creación del post, se captura y se muestra un mensaje de error al usuario.
+   */
   async submitPost(): Promise<void> {
     if (this.postForm.valid) {
       try {
@@ -252,9 +347,24 @@ export class CreatePostComponent implements OnInit {
       }
     }
   }
-  
-  // Método para resetear el formulario y todos los estados
-  private resetFormAndStates(): void {
+
+/**
+ * Restablece el formulario y los estados asociados en el componente.
+ * 
+ * Este método realiza las siguientes acciones:
+ * - Reinicia el formulario `postForm`.
+ * - Deselecciona todas las etiquetas de los arrays `tipoViaje`, `presupuesto` y `clima`.
+ * - Restablece las variables relacionadas con imágenes (`imageUrl`, `imageFile`, `imageFiles`).
+ * - Limpia los puntos de ruta (`waypoints`) y reinicia el estado del itinerario.
+ * - Deselecciona los checkboxes y radios asociados a las etiquetas en el DOM.
+ * - Limpia el valor del input de imagen.
+ * - Limpia el mapa utilizando los servicios de `mapsService`.
+ * - Re-inicializa el componente llamando a `ngOnInit`.
+ * 
+ * Este método es útil para reiniciar el estado del componente a su estado inicial,
+ * por ejemplo, después de crear un post o al cancelar una operación.
+ */
+ resetFormAndStates(): void {
     this.postForm.reset();
     this.tags.tipoViaje.forEach(tag => (tag.selected = false));
     this.tags.presupuesto.forEach(tag => (tag.selected = false));
@@ -266,8 +376,36 @@ export class CreatePostComponent implements OnInit {
     this.itinerarioFinalizado = false;
     this.itinerarioImagenUrl = null;
     this.googleMapsUrl = null;
+
+    this.tags.tipoViaje.forEach(tag => {
+      const travelTypeCheckbox = document.getElementById('tipo-' + tag.label) as HTMLInputElement;
+      if (travelTypeCheckbox) {
+        travelTypeCheckbox.checked = false;
+      }
+    });
     
+    this.tags.presupuesto.forEach(tag => {
+      const presupuestoRadio = document.getElementById('presupuesto-' + tag.label) as HTMLInputElement;
+      if (presupuestoRadio) {
+        presupuestoRadio.checked = false;
+      }
+    });
+    
+    this.tags.clima.forEach(tag => {
+      const climaRadio = document.getElementById('clima-' + tag.label) as HTMLInputElement;
+      if (climaRadio) {
+        climaRadio.checked = false;
+      }
+    });
+
+    const inputImage = document.getElementById('image');
+    if (inputImage) {
+      (inputImage as HTMLInputElement).value = ''; // Limpiar el input de imagen
+    }
+
     // Limpiar el mapa
     this.mapsService.clearWaypoints();
+    this.mapsService.clearSearchBox();
+    this.ngOnInit(); // Re-inicializar el mapa
   }
 }

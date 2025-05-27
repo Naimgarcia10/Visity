@@ -1,1 +1,12 @@
-/* You can add global styles to this file, and also import other style files */
+#splash-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: white; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-family: sans-serif;
+}

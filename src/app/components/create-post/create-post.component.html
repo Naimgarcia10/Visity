@@ -65,7 +65,7 @@
       <div class="itinerary-preview" *ngIf="waypoints.length > 0">
         <h3>Destinos añadidos:</h3>
         <ul>
-          <li *ngFor="let destino of waypoints">{{ destino.location }}</li>
+          <li *ngFor="let destino of waypoints">{{ destino.name }}</li>
         </ul>
         <button type="button" (click)="finalizarItinerarioYGenerarImagen()">Finalizar Itinerario</button>
       </div>
@@ -89,7 +89,7 @@
     
     <!-- Botones de acción -->
     <div class="action-buttons">
-      <!-- <button type="button" class="secondary-button" (click)="resetFormAndStates()">Cancelar</button> -->
+      <button type="button" class="secondary-button" (click)="resetFormAndStates()">Cancelar</button>
       <button type="submit" class="primary-button" [disabled]="postForm.invalid || isSubmitting">
         {{ isSubmitting ? 'Publicando...' : 'Publicar' }}
       </button>

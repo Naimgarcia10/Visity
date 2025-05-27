@@ -1,0 +1,19 @@
+<div class="post-card">
+  <div class="post-header">
+    <img class="profile-pic" src="default-profile.png" alt="Profile" />
+    <span class="author-id">{{ post.authorId }}</span>
+  </div>
+
+  <div class="post-image">
+    <img [src]="post.imageURLs[0]" alt="Post image" />
+  </div>
+
+  <div class="post-content">
+    <p>{{ post.content }}</p>
+    <p><strong>Tipo de viaje:</strong> {{ post.travelType.join(', ') }}</p>
+    <p><strong>Presupuesto:</strong> {{ post.budget }}</p>
+    <p><strong>Clima:</strong> {{ post.weather }}</p>
+    <p><strong>Likes:</strong> {{ post.likes }}</p>
+    <p><strong>Comentarios:</strong> {{ post.commentsCount }}</p>
+  </div>
+</div>

@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
-import { AuthService } from '../../shared/auth.service';
 import { UserModel } from '../../models/user_model';
 import { CommonModule } from '@angular/common';
-import { Auth, signInWithEmailAndPassword, sendPasswordResetEmail } from '@angular/fire/auth';
+import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 import { Router } from '@angular/router';
+import { AuthService } from '../../shared/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +19,7 @@ export class LoginComponent implements OnInit {
   imageUrl: string = 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2F1742213128185_messi_pic.jpg?alt=media&token=9f6d3ad0-d583-4a4d-8e94-2d16a28150f2';
   temporaryMessage: string = '';
 
-  constructor(private fb: FormBuilder, private firebaseAuth: Auth, private router:Router) {}
+  constructor(private fb: FormBuilder, private firebaseAuth: Auth, private router:Router, private authService: AuthService) {}
 
   ngOnInit() {
     this.user = new UserModel();
@@ -37,19 +37,31 @@ export class LoginComponent implements OnInit {
     return this.formLogin.get('password') as FormControl;
   }
 
+  /**
+   * Maneja la acción de inicio de sesión del usuario.
+   * 
+   * Este método verifica si el formulario de inicio de sesión es válido y, 
+   * en caso afirmativo, intenta autenticar al usuario utilizando las credenciales 
+   * proporcionadas (correo electrónico y contraseña). Si la autenticación es exitosa, 
+   * se almacena la información del usuario en la sesión y se redirige al usuario 
+   * a la página de inicio después de un breve mensaje temporal. En caso de error, 
+   * se muestra un mensaje temporal indicando el problema específico.
+   * 
+   * @returns {Promise<void>} Una promesa que se resuelve cuando la acción de inicio de sesión se completa.
+   
   async loginAction(): Promise<void> {
     if (this.formLogin.valid) {
       const email = this.formLogin.get('email')!.value;
       const password = this.formLogin.get('password')!.value;
 
-      try {
-        const userCredential = await signInWithEmailAndPassword(this.firebaseAuth, email, password);
+        try {
+        await this.authService.login(email, password);
         this.formLogin.reset();
-        this.temporaryMessage = 'Inicio de sesión exitoso';
-        sessionStorage.setItem('user', JSON.stringify(userCredential.user));
+        this.temporaryMessage = 'Inicio de sesión exitoso';  
+        
         setTimeout(() => {
           this.temporaryMessage = '';
-          this.router.navigate(['/home']);
+          this.router.navigate(['/feed']);
         }, 3000);
       } catch (error: any) {
         const errorCode = error.code;
@@ -67,7 +79,55 @@ export class LoginComponent implements OnInit {
       }
     }
   }
+  */
 
+  async loginAction(): Promise<void> {
+  if (this.formLogin.valid) {
+    const email = this.formLogin.get('email')!.value;
+    const password = this.formLogin.get('password')!.value;
+
+    try {
+      await this.authService.login(email, password);
+      this.formLogin.reset();
+      this.temporaryMessage = 'Inicio de sesión exitoso';  
+      
+      // Ya no necesitamos hacer la navegación aquí
+      // El evento de cambio de estado de autenticación en AuthService se encargará de esto
+      // o el guard lo manejará la próxima vez que se active
+    } catch (error: any) {
+        const errorCode = error.code;
+        if (errorCode === 'auth/user-not-found') {
+          this.temporaryMessage = 'El usuario no existe';
+        } else if (errorCode === 'auth/wrong-password') {
+          this.temporaryMessage = 'La contraseña es incorrecta';
+        } else if (errorCode === 'auth/invalid-email') {
+          this.temporaryMessage = 'El correo no es válido';
+        } else if (errorCode === 'auth/invalid-credential') {
+        this.temporaryMessage = 'Las credenciales no son válidas';
+      } else {
+          this.temporaryMessage = error.message;
+        }
+      }
+    }
+  }
+
+  /**
+   * Restablece la contraseña del usuario enviando un correo electrónico de restablecimiento.
+   * 
+   * Este método verifica si el campo de correo electrónico está lleno antes de intentar
+   * enviar el correo de restablecimiento. Si el correo no está presente, muestra un mensaje
+   * temporal solicitando al usuario que ingrese su correo electrónico. En caso de éxito,
+   * muestra un mensaje indicando que el correo de restablecimiento fue enviado. Si ocurre
+   * un error, maneja los códigos de error comunes y muestra mensajes apropiados.
+   * 
+   * @returns {Promise<void>} Una promesa que se resuelve cuando el proceso de restablecimiento
+   * de contraseña se completa o se maneja un error.
+   * 
+   * @throws {Error} Puede lanzar errores relacionados con Firebase Authentication, como
+   * 'auth/user-not-found', 'auth/invalid-email', o cualquier otro error inesperado.
+   * 
+   * $$$$$$$$$$$ MOVER A AUHT SERVICE $$$$$$$$$$$$$$
+   */
   async resetPassword(): Promise<void> {
     const email = this.formLogin.get('email')!.value;
     console.log('Email ingresado:', email);

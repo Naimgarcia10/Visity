@@ -1,52 +1,79 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject, NgZone } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  Auth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  User
+} from '@angular/fire/auth';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword } from '@angular/fire/auth';
-import { Firestore, collection, doc, setDoc, query, where, getDocs, updateDoc, getDoc } from '@angular/fire/firestore';
-import { BehaviorSubject } from 'rxjs';
-import { UserModel } from '../models/user_model';
-import { FireStorageMngService } from './fire-storage-mng.service';
+import { Firestore, collection, getDocs, query, where } from '@angular/fire/firestore';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUserSubject: BehaviorSubject<UserModel | null> = new BehaviorSubject<UserModel | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  private userSubject = new BehaviorSubject<User | null>(null);
+  user$: Observable<User | null> = this.userSubject.asObservable();
+  private isBrowser: boolean;
 
   constructor(
-    private auth: Auth, 
-    private router: Router, 
+    private auth: Auth,
+    private router: Router,
     private firestore: Firestore,
-    private storageMng: FireStorageMngService,
-  ) { }
-
-  logout() {
-    this.auth.signOut();
-    localStorage.setItem('token', 'false');
-    localStorage.removeItem('user_email');
-    this.currentUserSubject.next(null);
-    this.router.navigate(['/']);
-    localStorage.clear();
+    private ngZone: NgZone,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
   }
 
-  async updateProfile(userEmail: string, newData: Partial<UserModel>) {
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('email', '==', userEmail));
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((document) => {
-      updateDoc(doc(this.firestore, 'users', document.id), newData as { [key: string]: any });
-    });
+  isAuthenticated(): boolean {
+    if (this.auth.currentUser) return true;
+    if (this.isBrowser) return sessionStorage.getItem('user') !== null;
+    return false;
   }
 
-  async changePassword(email: string, newPassword: string) {
-    const user = this.auth.currentUser;
-    if (user) {
-      try {
-        await updatePassword(user, newPassword);
-        console.log('Contraseña cambiada exitosamente');
-      } catch (error) {
-        console.error('Error al cambiar la contraseña:', error);
+  getCurrentUser(): User | null {
+    if (this.auth.currentUser) return this.auth.currentUser;
+    if (this.isBrowser) {
+      const user = sessionStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    }
+    return null;
+  }
+
+  async login(email: string, password: string): Promise<User> {
+    try {
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      this.router.navigate(['/home']);
+      return userCredential.user;
+    } catch (error: any) {
+      console.error('Error en login:', error);
+      throw error;
+    }
+  }
+
+  async register(email: string, password: string): Promise<User> {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+      this.router.navigate(['/home']);
+      return userCredential.user;
+    } catch (error: any) {
+      console.error('Error en registro:', error);
+      throw error;
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await signOut(this.auth);
+      if (this.isBrowser) {
+        sessionStorage.removeItem('user');
       }
+      this.router.navigate(['/login']);
+    } catch (error: any) {
+      console.error('Error en logout:', error);
+      throw error;
     }
   }
 
@@ -55,12 +82,10 @@ export class AuthService {
       const usersRef = collection(this.firestore, 'users');
       const usernameQuery = query(usersRef, where('username', '==', username));
       const querySnapshot = await getDocs(usernameQuery);
-  
-      // Si la consulta devuelve resultados, el nombre de usuario ya está en uso
-      return querySnapshot.empty; // Devuelve true si no hay resultados (disponible), false si hay resultados (en uso)
+      return querySnapshot.empty;
     } catch (error) {
       console.error('Error checking username availability:', error);
-      return false; // En caso de error, asumimos que el nombre no está disponible
+      return false;
     }
   }
 }

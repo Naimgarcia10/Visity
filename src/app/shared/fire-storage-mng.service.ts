@@ -11,6 +11,14 @@ export class FireStorageMngService {
 };
   private storage: Storage = inject(Storage);
 
+  /**
+   * Sube un archivo al almacenamiento y devuelve la URL de descarga.
+   *
+   * @param file - El archivo que se desea subir.
+   * @param key - La clave que indica el tipo de archivo, puede ser 'profilePics' o 'posts'.
+   * @returns Una promesa que resuelve con la URL de descarga del archivo subido.
+   * @throws Lanza un error si ocurre algún problema durante la subida del archivo.
+   */
   async uploadFile(file: File, key: 'profilePics' | 'posts'): Promise<string> {
     try {
       const path = `${this.basePath[key]}/${new Date().getTime()}_${file.name}`;

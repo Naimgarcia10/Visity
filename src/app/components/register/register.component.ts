@@ -80,7 +80,22 @@ export class RegisterComponent implements OnInit {
     return this.formRegister.get('profilePic') as FormControl;
   }
 
-  // Acción de registro
+
+  /**
+   * Registra un nuevo usuario utilizando Firebase Authentication y almacena sus datos en Firestore.
+   * 
+   * Este método realiza las siguientes acciones:
+   * - Valida que el formulario de registro sea válido.
+   * - Verifica que las contraseñas ingresadas coincidan.
+   * - Crea un usuario en Firebase Authentication con el correo y contraseña proporcionados.
+   * - Almacena los datos adicionales del usuario en Firestore, incluyendo nombre completo, nombre de usuario, fecha de nacimiento, correo electrónico y foto de perfil.
+   * - Envía un correo de verificación al usuario registrado.
+   * - Limpia el formulario de registro y redirige al usuario a la página de inicio de sesión.
+   * 
+   * En caso de error, muestra mensajes temporales indicando el problema, como correo ya en uso, correo inválido, contraseña débil, entre otros.
+   * 
+   * @returns {Promise<void>} Una promesa que se resuelve cuando el registro se completa o se maneja un error.
+   */
   async registerAction(): Promise<void> {
     if (this.formRegister.valid) {
       const email = this.email.value.trim().toLowerCase();
@@ -142,7 +157,16 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  // Manejo de la subida de la foto de perfil
+  
+  /**
+   * Maneja el evento de carga de un archivo, subiendo la imagen seleccionada a Firebase Storage
+   * y actualizando el formulario con la URL de la imagen subida.
+   *
+   * @param e - Evento que contiene los archivos seleccionados por el usuario.
+   * @returns Una promesa que se resuelve cuando la operación de carga se completa.
+   *
+   * @throws Muestra un mensaje temporal de error si ocurre un problema durante la carga de la imagen.
+   */
   async onUpload(e: any): Promise<void> {
     if (e.target.files && e.target.files[0]) {
       try {

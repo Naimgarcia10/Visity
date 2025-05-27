@@ -1,0 +1,50 @@
+.post-card {
+  background-color: #fff9f5;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  margin: 1rem auto;
+  padding: 1rem;
+  width: 100%;
+  max-width: 500px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #333;
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 0.75rem;
+      border: 2px solid #ffd6d6;
+    }
+
+    .author-id {
+      font-weight: 600;
+      color: #ff6b81;
+    }
+  }
+
+  .post-image img {
+    width: 100%;
+    border-radius: 0.75rem;
+    object-fit: cover;
+    margin-bottom: 0.75rem;
+  }
+
+  .post-content {
+    font-size: 0.95rem;
+    line-height: 1.4;
+
+    p {
+      margin: 0.25rem 0;
+
+      strong {
+        color: #a471b1;
+      }
+    }
+  }
+}
