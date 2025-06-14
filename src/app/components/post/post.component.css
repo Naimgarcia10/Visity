@@ -26,6 +26,12 @@
       font-weight: 600;
       color: #ff6b81;
     }
+
+    .post-date {
+      font-size: 0.85rem;
+      color: #666;
+      margin-left: auto;
+    }
   }
 
   .post-image img {
@@ -47,4 +53,101 @@
       }
     }
   }
+}
+
+.prev-btn, .next-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.3); /* fondo oscuro sutil */
+  color: white;
+  border: none;
+  padding: 0.6rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 50%; /* forma circular */
+  z-index: 10;
+  transition: background 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prev-btn:hover,
+.next-btn:hover {
+  background: rgba(0, 0, 0, 0.5); /* más visible al hacer hover */
+  transform: translateY(-50%) scale(1.1);
+}
+
+.prev-btn:disabled,
+.next-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.prev-btn {
+  left: 12px;
+}
+
+.next-btn {
+  right: 12px;
+}
+
+.carousel {
+  position: relative;
+  text-align: center;
+  margin: 1em 0;
+  width: 100%;
+  height: 300px; /* Altura fija del carrusel */
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.carousel-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ✅ Esto asegura que todas se recorten igual y llenen el espacio */
+  display: block;
+  border-radius: 10px;
+}
+
+.carousel-indicators {
+  margin-top: 0.5em;
+}
+
+.carousel-indicators span {
+  font-size: 1.5em;
+  color: #ccc;
+  transition: color 0.3s ease;
+}
+
+.carousel-indicators .active {
+  color: #ff6b81;
+}
+
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.comments {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+.comment {
+  margin-bottom: 0.5rem;
+}
+.add-comment {
+  display: flex;
+  gap: 0.5rem;
+}
+.add-comment input {
+  flex: 1;
+  padding: 0.4rem;
+}
+.add-comment button {
+  padding: 0.4rem 1rem;
 }

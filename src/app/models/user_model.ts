@@ -1,7 +1,10 @@
-export class UserModel {
-    fullname!: string;
-    birthdate!: string;
-    email!: string;
-    password!: string;
-    profilePic!: string;
-  }
+export interface UserModel {
+  uid: string;
+  email: string;
+  username: string;
+  fullname: string;
+  birthdate: string;
+  profilePic: string;
+  followersCount: number;
+  followingCount: number;
+}

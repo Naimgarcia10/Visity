@@ -1,7 +1,16 @@
 <div class="feed-container">
-  <app-post *ngFor="let post of posts" [post]="post"></app-post>
-</div>
-<p *ngIf="!posts.length">No hay publicaciones disponibles.</p>
-<p>HOLA</p>
 
-<button (click)="logout()">Cerrar Sesion</button>
+  <ng-container *ngIf="posts.length === 0">
+    <p>No hay posts de usuarios a los que sigues.</p>
+  </ng-container>
+
+  <button (click)="logout()">Cerrar Sesion</button>
+  <button (click)="followUser()">Seguir</button>
+  <!-- <button (click)="loadMore()">Cargar más</button> -->
+  <a routerLink="/home" class="btn btn-secondary">Home</a>
+  <!-- <img src="{{ global.logo }}" alt="Logotipo Visity" class="img-fluid"> -->
+
+  <ng-container *ngIf="posts.length > 0">
+    <app-post *ngFor="let post of posts" [post]="post"></app-post>
+  </ng-container>
+</div>

@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { UserModel } from '../../models/user_model';
 import { CommonModule } from '@angular/common';
 import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../shared/auth.service';
 
 @Component({
@@ -11,18 +11,21 @@ import { AuthService } from '../../shared/auth.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule]
+  imports: [ReactiveFormsModule, CommonModule, RouterModule]
 })
 export class LoginComponent implements OnInit {
-  user: UserModel = new UserModel();
   formLogin: any;
-  imageUrl: string = 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2F1742213128185_messi_pic.jpg?alt=media&token=9f6d3ad0-d583-4a4d-8e94-2d16a28150f2';
   temporaryMessage: string = '';
 
-  constructor(private fb: FormBuilder, private firebaseAuth: Auth, private router:Router, private authService: AuthService) {}
+  constructor(
+    private fb: FormBuilder, 
+    private firebaseAuth: Auth, 
+    private router:Router, 
+    private authService: AuthService,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
-    this.user = new UserModel();
     this.formLogin = this.fb.group({
       'email': ['', [Validators.required, Validators.email]],
       'password': ['', [Validators.required, Validators.minLength(6)]]
@@ -88,8 +91,15 @@ export class LoginComponent implements OnInit {
 
     try {
       await this.authService.login(email, password);
-      this.formLogin.reset();
-      this.temporaryMessage = 'Inicio de sesión exitoso';  
+      this.ngZone.run(() => {
+        this.formLogin.reset();
+        this.temporaryMessage = 'Inicio de sesión exitoso';
+        setTimeout(() => {
+          this.temporaryMessage = '';
+          this.router.navigate(['/feed']);
+        }, 3000);
+      });
+ 
       
       // Ya no necesitamos hacer la navegación aquí
       // El evento de cambio de estado de autenticación en AuthService se encargará de esto

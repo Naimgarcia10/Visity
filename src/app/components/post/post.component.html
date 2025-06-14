@@ -1,11 +1,23 @@
 <div class="post-card">
   <div class="post-header">
-    <img class="profile-pic" src="default-profile.png" alt="Profile" />
-    <span class="author-id">{{ post.authorId }}</span>
+    <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
+    <span class="author-id">{{ authorUsername }}</span>
+    <small class="post-date">{{ postTimeAgo }}</small>
   </div>
 
-  <div class="post-image">
-    <img [src]="post.imageURLs[0]" alt="Post image" />
+  <div class="carousel" *ngIf="post.imageURLs?.length">
+    <button class="prev-btn" *ngIf="post.imageURLs.length >= 2" (click)="prevImage()" [disabled]="currentImageIndex === 0">‹</button>
+
+    <img class="carousel-image" [src]="post.imageURLs[currentImageIndex]" alt="Imagen del post" />
+
+    <button class="next-btn" *ngIf="post.imageURLs.length >= 2" (click)="nextImage()" [disabled]="currentImageIndex === post.imageURLs.length - 1">›</button>
+
+    <div class="carousel-indicators" *ngIf="post.imageURLs.length >= 2">
+      <span 
+        *ngFor="let img of post.imageURLs; let i = index"
+        [class.active]="i === currentImageIndex"
+        (click)="currentImageIndex = i">●</span>
+    </div>
   </div>
 
   <div class="post-content">
@@ -13,7 +25,41 @@
     <p><strong>Tipo de viaje:</strong> {{ post.travelType.join(', ') }}</p>
     <p><strong>Presupuesto:</strong> {{ post.budget }}</p>
     <p><strong>Clima:</strong> {{ post.weather }}</p>
-    <p><strong>Likes:</strong> {{ post.likes }}</p>
-    <p><strong>Comentarios:</strong> {{ post.commentsCount }}</p>
+    <p *ngIf="googleMapsUrl">
+      <a [href]="googleMapsUrl" target="_blank">Ver en Google Maps</a>
+    </p>
+    
+    <button (click)="toggleLike()">
+      <span class="like-btn" [style.color]="hasLiked ? 'red' : 'gray'">❤️</span> {{ post.likes }}
+    </button>
+    <span>💬 {{ comments.length }}</span>
   </div>
+
+  <!-- COMENTARIOS -->
+  <!-- <div class="comments-section">
+    <div class="comment" *ngFor="let comment of comments">
+      <strong>{{ comment.username }}</strong>: {{ comment.text }}
+    </div>
+
+    <div class="comment-form">
+      <input
+        type="text"
+        [(ngModel)]="commentText"
+        placeholder="Escribe un comentario..."
+        (keydown.enter)="addComment()"
+      />
+      <button (click)="addComment()" [disabled]="!commentText.trim()">Enviar</button>
+    </div>
+  </div> -->
+    <div class="comments">
+    <div class="comment" *ngFor="let c of comments">
+      <strong>{{ authorNames[c.authorId] || '...' }}</strong>: {{ c.content }}
+    </div>
+
+    <div class="add-comment">
+      <input [(ngModel)]="commentText" placeholder="Añadir comentario..." />
+      <button (click)="addComment()">Enviar</button>
+    </div>
+  </div>
+
 </div>

@@ -9,7 +9,8 @@ import {
 } from '@angular/fire/auth';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
-import { Firestore, collection, getDocs, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, getDocs, query, where, doc, getDoc } from '@angular/fire/firestore';
+import { UserModel } from '../models/user_model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -45,7 +46,6 @@ export class AuthService {
   async login(email: string, password: string): Promise<User> {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
-      this.router.navigate(['/home']);
       return userCredential.user;
     } catch (error: any) {
       console.error('Error en login:', error);
@@ -56,7 +56,7 @@ export class AuthService {
   async register(email: string, password: string): Promise<User> {
     try {
       const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-      this.router.navigate(['/home']);
+      this.ngZone.run(() => this.router.navigate(['/home']));
       return userCredential.user;
     } catch (error: any) {
       console.error('Error en registro:', error);
@@ -65,17 +65,19 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
-    try {
-      await signOut(this.auth);
-      if (this.isBrowser) {
-        sessionStorage.removeItem('user');
-      }
-      this.router.navigate(['/login']);
-    } catch (error: any) {
-      console.error('Error en logout:', error);
-      throw error;
+  try {
+    await signOut(this.auth);
+    if (this.isBrowser) {
+      sessionStorage.removeItem('user');
     }
+    this.ngZone.run(() => {
+      this.router.navigate(['/login']);
+    });
+  } catch (error: any) {
+    console.error('Error en logout:', error);
+    throw error;
   }
+}
 
   async isUsernameAvailable(username: string): Promise<boolean> {
     try {
@@ -86,6 +88,45 @@ export class AuthService {
     } catch (error) {
       console.error('Error checking username availability:', error);
       return false;
+    }
+  }
+
+async getUserById(userId: string): Promise<UserModel | null> {
+  try {
+    const userDocRef = doc(this.firestore, 'users', userId);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) throw new Error('Usuario no encontrado');
+    
+    const userData = userDocSnap.data();
+    return { uid: userId, ...userData } as UserModel;
+  } catch (error) {
+    console.error('Error getting user by ID:', error);
+    return null;
+  }
+}
+
+  async getUsernameById(userId: string): Promise<string | null> {
+    try {
+      const userDocRef = doc(this.firestore, 'users', userId);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) throw new Error('Usuario no encontrado');
+      return userDocSnap.data()['username'] || null;
+    } catch (error) {
+      console.error('Error getting username by ID:', error);
+      return null;
+    }
+  }
+
+  async getIdByUsername(username: string): Promise<string | null> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const usernameQuery = query(usersRef, where('username', '==', username));
+      const querySnapshot = await getDocs(usernameQuery);
+      if (querySnapshot.empty) throw new Error('Usuario no encontrado');
+      return querySnapshot.docs[0].id;
+    } catch (error) {
+      console.error('Error getting ID by username:', error);
+      return null;
     }
   }
 }

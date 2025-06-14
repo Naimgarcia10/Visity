@@ -48,15 +48,17 @@
       <span>Las contraseñas no coinciden</span>
     </div>
 
-    <label for="profilePic">Foto de Perfil:</label>
-    <input type="file" id="profilePic" accept=".png, .jpg, .jpeg" formControlName="profilePic" (change)="onUpload($event)">
+    <label for="profileImage">Foto de Perfil:</label>
+    <input type="file" id="profileImage" accept=".png, .jpg, .jpeg" formControlName="profilePic" (change)="onUpload($event)">
+    <small style="color: gray;">La imagen solo se subirá al hacer clic en “Registrarse”.</small>
+
+    <div *ngIf="imageUrl" class="image-preview" style="margin-top: 10px;">
+      <img [src]="imageUrl" alt="Imagen de perfil" class="preview-image" style="max-width: 100px; border-radius: 4px;">
+    </div>
 
     <a routerLink="/login">Iniciar Sesión</a>
     <button type="submit" class="user-button" [disabled]="formRegister.invalid">Registrarse</button>
   </form>
 
-  <div *ngIf="imageUrl" class="image-preview">
-    <img [src]="imageUrl" alt="Imagen de perfil" class="preview-image">
-  </div>
   <p id="temporary-message-register">{{ temporaryMessage }}</p>
 </div>

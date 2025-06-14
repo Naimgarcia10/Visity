@@ -1,76 +1,88 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Post } from '../../models/post.model';
+import { Component, OnInit, NgZone, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { PostComponent } from '../post/post.component';
 import { PostService } from '../../shared/post.service';
 import { AuthService } from '../../shared/auth.service';
-import { PostComponent } from '../post/post.component';
-import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { Post } from '../../models/post.model';
+import { FollowService } from '../../shared/follow.service';
+import { GlobalService } from '../../shared/global.service'; 
 
 @Component({
   selector: 'app-feed',
-  templateUrl: './feed.component.html',
-  styleUrls: ['./feed.component.scss'],
   standalone: true,
-  imports: [CommonModule, RouterModule, PostComponent]
+  imports: [CommonModule, RouterModule, PostComponent],
+  templateUrl: './feed.component.html',
+  styleUrls: ['./feed.component.css']
 })
 export class FeedComponent implements OnInit {
   posts: Post[] = [];
-  loading: boolean = true;
-  error: string | null = null;
-  
+  global  = inject(GlobalService);
+
   constructor(
     private postService: PostService,
+    private followService: FollowService,
     private authService: AuthService,
-    private router: Router
-  ) {
-    console.log('FeedComponent constructor ejecutado');
-  }
-  
+    private router: Router,
+    private ngZone: NgZone
+  ) {}
+
   async ngOnInit() {
-  console.log('FeedComponent ngOnInit iniciado');
-  try {
-    this.loading = true;
-    
-    const currentUser = this.authService.getCurrentUser();
-    
-    // Verificar si hay un usuario antes de intentar acceder a sus propiedades
-    if (!currentUser) {
-      console.error('No hay usuario autenticado');
-      this.error = 'Debes iniciar sesión para ver el feed';
-      this.router.navigate(['/login']);
+    const user = this.authService.getCurrentUser();
+
+    if (!user) {
+      console.warn('Usuario no autenticado');
+      this.ngZone.run(() => {
+        this.router.navigate(['/login']);
+      });
       return;
     }
-    
-    console.log('Obteniendo posts para usuario:', currentUser.uid);
-    
-    // Resto del código...
-    const followedPosts = await this.postService.getPostsFromFollowedUsers(currentUser.uid);
-    
-    console.log('Posts obtenidos:', followedPosts.length);
-    
-    // Ordenar por fecha descendente
-    this.posts = followedPosts.sort((a, b) => {
-      const aDate = a.createdAt?.toMillis?.() || 0;
-      const bDate = b.createdAt?.toMillis?.() || 0;
-      return bDate - aDate;
-    });
-  } catch (error) {
-    console.error('Error en ngOnInit:', error);
-    this.error = 'Error al cargar el feed';
-  } finally {
-    this.loading = false;
-    console.log('FeedComponent ngOnInit completado');
+
+    try {
+      const posts = await this.postService.getPosts(user.uid);
+      this.ngZone.run(() => {
+        this.posts = posts;
+      });
+    } catch (error) {
+      console.error('Error cargando feed:', error);
+    }
   }
-}
 
   logout() {
     this.authService.logout().then(() => {
-      console.log('Usuario desconectado');
-      this.router.navigate(['/login']);
-    }).catch((error) => {
+      this.ngZone.run(() => {
+        console.log('Usuario desconectado');
+        this.router.navigate(['/login']);
+      });
+    }).catch(error => {
       console.error('Error al cerrar sesión:', error);
     });
-
   }
+
+  async followUser() {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.warn('Usuario no autenticado');
+      return;
+    }
+
+    const currentUsername = await this.authService.getUsernameById(currentUser.uid);
+    if (!currentUsername) {
+      console.warn('No se pudo obtener el nombre de usuario del usuario actual');
+      return;
+    }
+
+    const followedUsername = 'santi10'; 
+
+    this.followService.followUserByUsername(currentUsername, followedUsername)
+      .subscribe({
+        next: () => {
+          console.log(`Ahora sigues a ${followedUsername}`);
+        },
+        error: (error) => {
+          console.error('Error al seguir al usuario:', error);
+        }
+      });
+  }
+
 }

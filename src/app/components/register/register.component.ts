@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../shared/auth.service';
 import { UserModel } from '../../models/user_model';
@@ -23,7 +23,16 @@ import { usernameAvailableValidator } from '../../validators/username-async.vali
   providers: [FireStorageMngService]
 })
 export class RegisterComponent implements OnInit {
-  user: UserModel = new UserModel();
+  user: UserModel = {
+    uid: '',
+    email: '',
+    username: '',
+    fullname: '',
+    birthdate: '',
+    profilePic: '',
+    followersCount: 0,
+    followingCount: 0
+  };
   imageUrl: string = '';
   formRegister: any;
   temporaryMessage: string = '';
@@ -35,7 +44,8 @@ export class RegisterComponent implements OnInit {
     private storageMng: FireStorageMngService,
     private firebaseAuth: Auth,
     private firestore: Firestore,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -112,9 +122,8 @@ export class RegisterComponent implements OnInit {
       try {
         // Crea el usuario con Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(this.firebaseAuth, email, password);
-
-        // Obtén el UID del usuario
         const uid = userCredential.user?.uid;
+
         if (uid) {
           const userRef = doc(this.firestore, 'users', uid);
           const userData = {
@@ -125,24 +134,22 @@ export class RegisterComponent implements OnInit {
             profilePic: this.imageUrl || 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2FprofilePic_dummy.png?alt=media&token=b7376b23-046a-43b0-a103-6da464c0b455'
           };
           console.log('userData', userData);
-        // Guarda los datos del usuario en Firestore
-        await setDoc(userRef, userData);
+        
+          await setDoc(userRef, userData);
+          await sendEmailVerification(userCredential.user);
 
-        // Limpia el formulario
-        this.formRegister.reset();
+          this.ngZone.run(() => {
+            this.formRegister.reset();
+            this.imageUrl = '';
+            this.temporaryMessage = 'Usuario creado con éxito. Por favor, verifica tu correo electrónico para continuar';
 
-        // Envía el correo de verificación
-        await sendEmailVerification(userCredential.user);
-
-          // Redirige al login
-          this.temporaryMessage = 'Usuario creado con éxito. Por favor, verifica tu correo electrónico para continuar';
-          setTimeout(() => {
-            this.temporaryMessage = '';
-            this.router.navigate(['/login']);
-          }, 3000);
+            setTimeout(() => {
+              this.temporaryMessage = '';
+              this.router.navigateByUrl('/feed');
+            }, 3000);
+          });
         }
       } catch (error: any) {
-        // Manejo de errores
         const errorCode = error.code;
         if (errorCode === 'auth/email-already-in-use') {
           this.temporaryMessage = 'El correo ya está en uso';
@@ -157,7 +164,6 @@ export class RegisterComponent implements OnInit {
     }
   }
 
-  
   /**
    * Maneja el evento de carga de un archivo, subiendo la imagen seleccionada a Firebase Storage
    * y actualizando el formulario con la URL de la imagen subida.
@@ -171,12 +177,19 @@ export class RegisterComponent implements OnInit {
     if (e.target.files && e.target.files[0]) {
       try {
         const file = e.target.files[0];
-        this.imageUrl = await this.storageMng.uploadFile(file, 'profilePics'); // Sube la imagen a Firebase Storage
-        this.profilePic.setValue(this.imageUrl); // Establece la URL de la imagen en el formulario
-        this.temporaryMessage = 'Foto de perfil subida con éxito';
+        const url = await this.storageMng.uploadFile(file, 'profilePics');
+
+        // Asegura que Angular detecte el cambio
+        this.ngZone.run(() => {
+          this.imageUrl = url;
+          this.temporaryMessage = 'Foto de perfil subida con éxito';
+        });
       } catch (error) {
-        this.temporaryMessage = 'Error al subir la foto de perfil';
+        this.ngZone.run(() => {
+          this.temporaryMessage = 'Error al subir la foto de perfil';
+        });
       }
     }
   }
+
 }
