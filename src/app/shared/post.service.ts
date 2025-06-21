@@ -13,11 +13,18 @@ import {
   FieldValue,
   arrayRemove,
   arrayUnion,
-  updateDoc
+  updateDoc,
+  limit
 } from '@angular/fire/firestore';
 import { FireStorageMngService } from './fire-storage-mng.service';
 import { Auth } from '@angular/fire/auth';
 import { Post } from '../models/post.model';
+
+interface TagFrequencies {
+  travelType: Record<string, number>;
+  budget: Record<string, number>;
+  weather: Record<string, number>;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -176,5 +183,126 @@ export class PostService {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  
+  /**
+ * Obtiene los posts más populares según el tipo de viaje preferido.
+ * @param travelType Tipo de viaje preferido (ej: "Cultural")
+ * @param limitResults Número máximo de resultados a devolver (por defecto 10)
+ * @returns Lista de posts populares
+ */
+  async getPopularPostsByPreferredTravelType(travelType: string): Promise<Post[]> {
+    try {
+      const q = query(
+        collection(this.firestore, 'posts'),
+        where('travelType', 'array-contains', travelType),
+        orderBy('likes', 'desc'),
+        limit(10) // o el número que prefieras
+      );
+
+      const snap = await getDocs(q);
+      return snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Post[];
+
+    } catch (error) {
+      console.error('Error obteniendo posts populares:', error);
+      return [];
+    }
+  }
+
+  /**
+ * Extrae los tags más frecuentes (travelType, budget, weather) del usuario a partir de sus posts y likes.
+ */
+  async getUserPreferenceTags(uid: string): Promise<TagFrequencies> {
+  const userPosts = await this.getPostsByUser(uid);
+  if (!userPosts || userPosts.length === 0) {
+    return {
+      travelType: {},
+      budget: {},
+      weather: {}
+    };
+  }
+
+  const travelTypeFreq: Record<string, number> = {};
+  const budgetFreq: Record<string, number> = {};
+  const weatherFreq: Record<string, number> = {};
+
+  for (const post of userPosts) {
+    post.travelType?.forEach((tag: string) => travelTypeFreq[tag] = (travelTypeFreq[tag] || 0) + 1);
+    if (post.budget) budgetFreq[post.budget] = (budgetFreq[post.budget] || 0) + 1;
+    if (post.weather) weatherFreq[post.weather] = (weatherFreq[post.weather] || 0) + 1;
+  }
+
+  return {
+    travelType: travelTypeFreq,
+    budget: budgetFreq,
+    weather: weatherFreq
+  };
+}
+
+/**
+ * Obtiene todos los posts de un usuario por su UID
+ */
+async getPostsByUser(uid: string): Promise<Post[]> {
+  try {
+    const q = query(
+      collection(this.firestore, 'posts'),
+      where('authorId', '==', uid),
+      orderBy('createdAt', 'desc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Post[];
+  } catch (error) {
+    console.error('Error obteniendo posts del usuario:', error);
+    return [];
+  }
+}
+
+
+
+  private addTagsToMap(allTags: any, data: any) {
+    // travelType puede ser un array
+    if (Array.isArray(data.travelType)) {
+      data.travelType.forEach((tag: string) => {
+        allTags.travelType.set(tag, (allTags.travelType.get(tag) || 0) + 1);
+      });
+    }
+
+    if (typeof data.budget === 'string') {
+      allTags.budget.set(data.budget, (allTags.budget.get(data.budget) || 0) + 1);
+    }
+
+    if (typeof data.weather === 'string') {
+      allTags.weather.set(data.weather, (allTags.weather.get(data.weather) || 0) + 1);
+    }
+  }
+
+  private getTopTags(tagMap: Map<string, number>, topN: number): string[] {
+    return [...tagMap.entries()]
+      .sort((a, b) => b[1] - a[1]) // ordenar por frecuencia
+      .slice(0, topN)
+      .map(([tag]) => tag);
+  }
+
+  /**
+ * Devuelve los IDs de autores de los posts que el usuario actual ha dado like
+ */
+  async getAuthorsLikedByUser(userId: string): Promise<string[]> {
+    const postsRef = collection(this.firestore, 'posts');
+    const postsSnap = await getDocs(postsRef);
+    
+    const likedAuthors = new Set<string>();
+
+    postsSnap.forEach(doc => {
+      const data = doc.data();
+      if (Array.isArray(data['likedBy']) && data['likedBy'].includes(userId)) {
+        likedAuthors.add(data['authorId']);
+      }
+    });
+
+    return Array.from(likedAuthors);
+  }
 }

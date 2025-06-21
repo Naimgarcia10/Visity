@@ -213,4 +213,12 @@ export class FollowService {
       })
     );
   }
+
+  async searchUsersByUsername(search: string, excludeUsername: string): Promise<any[]> {
+    const usersRef = collection(this.firestore, 'users');
+    const snapshot = await getDocs(usersRef);
+    return snapshot.docs
+      .map(doc => doc.data())
+      .filter(user => user["username"] && user["username"] !== excludeUsername && user["username"].includes(search));
+  }
 }

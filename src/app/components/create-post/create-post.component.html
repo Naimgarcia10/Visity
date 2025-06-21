@@ -14,12 +14,20 @@
       <label for="image">Fotos del viaje (máximo 10):</label>
       <input type="file" id="image" multiple (change)="onImageUpload($event)">
       
-      <div class="image-preview" *ngIf="imageUrl">
-        <img [src]="imageUrl" alt="Vista previa">
-        <p>{{ imageFiles.length > 1 ? imageFiles.length + ' imágenes seleccionadas' : '' }}</p>
+      <div class="carousel" *ngIf="imageFiles.length > 0">
+        <button class="prev-btn" *ngIf="imageFiles.length >= 2" (click)="prevImage()" [disabled]="currentImageIndex === 0">‹</button>
+
+        <img class="carousel-image" [src]="imageFiles.length ? (imageFiles[currentImageIndex] | fileToUrl) : null" alt="Vista previa" />
+
+        <button class="next-btn" *ngIf="imageFiles.length >= 2" (click)="nextImage()" [disabled]="currentImageIndex === imageFiles.length - 1">›</button>
+
+        <div class="carousel-indicators" *ngIf="imageFiles.length >= 2">
+          <span *ngFor="let file of imageFiles; let i = index"
+                [class.active]="i === currentImageIndex"
+                (click)="currentImageIndex = i"></span>
+        </div>
       </div>
     </div>
-    
     <!-- Sección de categorización -->
     <div class="form-section">
       <h3>Categoriza tu viaje</h3>

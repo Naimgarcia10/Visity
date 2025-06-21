@@ -1,0 +1,29 @@
+<div class="filter-card">
+  <h3>Filtros</h3>
+
+  <section class="filter-group">
+    <h4>Tipo de viaje</h4>
+    <label *ngFor="let type of travelTypes" class="filter-option">
+      <input type="checkbox" [value]="type" (change)="onCheckboxChange('travelType', $event)">
+      {{ type }}
+    </label>
+  </section>
+
+  <section class="filter-group">
+    <h4>Presupuesto</h4>
+    <label *ngFor="let b of budgets" class="filter-option">
+      <input type="checkbox" [value]="b" (change)="onCheckboxChange('budget', $event)">
+      {{ b }}
+    </label>
+  </section>
+
+  <section class="filter-group">
+    <h4>Clima</h4>
+    <label *ngFor="let w of weatherOptions" class="filter-option">
+      <input type="checkbox" [value]="w" (change)="onCheckboxChange('weather', $event)">
+      {{ w }}
+    </label>
+  </section>
+
+  <button class="reset-btn" (click)="resetFilters()">Reiniciar filtros</button>
+</div>

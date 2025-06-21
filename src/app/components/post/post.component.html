@@ -16,50 +16,54 @@
       <span 
         *ngFor="let img of post.imageURLs; let i = index"
         [class.active]="i === currentImageIndex"
-        (click)="currentImageIndex = i">●</span>
+        (click)="currentImageIndex = i"></span>
     </div>
   </div>
 
   <div class="post-content">
     <p>{{ post.content }}</p>
-    <p><strong>Tipo de viaje:</strong> {{ post.travelType.join(', ') }}</p>
-    <p><strong>Presupuesto:</strong> {{ post.budget }}</p>
-    <p><strong>Clima:</strong> {{ post.weather }}</p>
+    <div class="tags">
+      <div class="tag-group">
+        <strong>Tipo de viaje:</strong>
+        <span *ngFor="let t of post.travelType" class="tag pill travel">{{ t }}</span>
+      </div>
+
+      <div class="tag-group">
+        <strong>Presupuesto:</strong>
+        <span class="tag pill budget">{{ post.budget }}</span>
+      </div>
+
+      <div class="tag-group">
+        <strong>Clima:</strong>
+        <span class="tag pill weather">{{ post.weather }}</span>
+      </div>
+    </div>
+
     <p *ngIf="googleMapsUrl">
       <a [href]="googleMapsUrl" target="_blank">Ver en Google Maps</a>
     </p>
     
-    <button (click)="toggleLike()">
-      <span class="like-btn" [style.color]="hasLiked ? 'red' : 'gray'">❤️</span> {{ post.likes }}
-    </button>
-    <span>💬 {{ comments.length }}</span>
-  </div>
-
-  <!-- COMENTARIOS -->
-  <!-- <div class="comments-section">
-    <div class="comment" *ngFor="let comment of comments">
-      <strong>{{ comment.username }}</strong>: {{ comment.text }}
+    <div class="interactions">
+      <button class="like-btn" (click)="toggleLike()">
+        <span *ngIf="!hasLiked">🤍</span>
+        <span *ngIf="hasLiked">❤️</span>
+        {{ post.likes }}
+      </button>
+      <span class="comment-count">💬 {{ comments.length }}</span>
     </div>
 
-    <div class="comment-form">
-      <input
-        type="text"
-        [(ngModel)]="commentText"
-        placeholder="Escribe un comentario..."
-        (keydown.enter)="addComment()"
-      />
-      <button (click)="addComment()" [disabled]="!commentText.trim()">Enviar</button>
-    </div>
-  </div> -->
+
+
     <div class="comments">
-    <div class="comment" *ngFor="let c of comments">
-      <strong>{{ authorNames[c.authorId] || '...' }}</strong>: {{ c.content }}
+      <div class="comment" *ngFor="let c of comments">
+        <strong>{{ authorNames[c.authorId] || '...' }}</strong>: {{ c.content }}
+      </div>
+
+      <div class="add-comment">
+        <input [(ngModel)]="commentText" placeholder="Añadir comentario..." />
+        <button (click)="addComment()">Enviar</button>
+      </div>
     </div>
 
-    <div class="add-comment">
-      <input [(ngModel)]="commentText" placeholder="Añadir comentario..." />
-      <button (click)="addComment()">Enviar</button>
-    </div>
-  </div>
 
 </div>

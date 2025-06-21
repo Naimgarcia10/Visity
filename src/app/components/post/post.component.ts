@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Post } from '../../models/post.model'; 
 import { AuthService } from '../../shared/auth.service';
@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class PostComponent {
   @Input() post!: Post;  
+   @Output() liked = new EventEmitter<void>(); // ✅ Nuevo evento
   authorUsername: string | null = null;
   authorProfilePicture: string | null = null;
   currentImageIndex: number = 0;
@@ -83,6 +84,8 @@ export class PostComponent {
     await this.postService.toggleLike(this.post.id, this.currentUserId);
     this.hasLiked = !this.hasLiked;
     this.post.likes += this.hasLiked ? 1 : -1;
+
+    this.liked.emit();
   }
 
   // 🔽 Cargar comentarios del post
@@ -109,8 +112,4 @@ export class PostComponent {
     this.commentText = '';
     await this.loadComments(); // recargar comentarios tras añadir
   }
-
-  async getUsernameById(userId: string): Promise<string | null> {
-    return await this.authService.getUsernameById(userId);
-  } 
 }

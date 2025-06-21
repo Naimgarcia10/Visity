@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone } from '@angular/core';
-import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { AuthService } from '../../shared/auth.service';
 import { UserModel } from '../../models/user_model';
 import { FireStorageMngService } from '../../shared/fire-storage-mng.service';
@@ -31,12 +31,22 @@ export class RegisterComponent implements OnInit {
     birthdate: '',
     profilePic: '',
     followersCount: 0,
-    followingCount: 0
+    followingCount: 0,
+    preferredTravelType: ''
   };
   imageUrl: string = '';
   formRegister: any;
   temporaryMessage: string = '';
   isValidUsername: boolean = true;
+  tags = {
+    tipoViaje: [
+      { label: 'Mochilero', selected: false },
+      { label: 'Aventura', selected: false },
+      { label: 'Cultural', selected: false },
+      { label: 'Gastronómico', selected: false }
+    ]
+  };
+
 
   constructor(
     private fb: FormBuilder,
@@ -56,7 +66,8 @@ export class RegisterComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       password2: ['', [Validators.required, Validators.minLength(6)]],
-      profilePic: ''
+      profilePic: '',
+      preferredTravelType: ['', [Validators.required]]
     });
 
   } 
@@ -89,6 +100,10 @@ export class RegisterComponent implements OnInit {
   get profilePic() {
     return this.formRegister.get('profilePic') as FormControl;
   }
+
+  get preferredTravelType() {
+  return this.formRegister.get('preferredTravelType') as FormControl;
+}
 
 
   /**
@@ -131,7 +146,8 @@ export class RegisterComponent implements OnInit {
             username: username,
             birthdate: this.birthdate.value,
             email: email,
-            profilePic: this.imageUrl || 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2FprofilePic_dummy.png?alt=media&token=b7376b23-046a-43b0-a103-6da464c0b455'
+            profilePic: this.imageUrl || 'https://firebasestorage.googleapis.com/v0/b/visity-bd.firebasestorage.app/o/profilePics%2FprofilePic_dummy.png?alt=media&token=b7376b23-046a-43b0-a103-6da464c0b455',
+            preferredTravelType: this.preferredTravelType.value,
           };
           console.log('userData', userData);
         
@@ -191,5 +207,15 @@ export class RegisterComponent implements OnInit {
       }
     }
   }
+
+  onPreferredTravelTypeChange(selectedTag: string) {
+    const current = this.preferredTravelType.value;
+    if (current === selectedTag) {
+      this.preferredTravelType.setValue(''); // desmarca si ya estaba seleccionado
+    } else {
+      this.preferredTravelType.setValue(selectedTag);
+    }
+  }
+
 
 }

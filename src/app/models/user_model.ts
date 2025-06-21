@@ -7,4 +7,5 @@ export interface UserModel {
   profilePic: string;
   followersCount: number;
   followingCount: number;
+  preferredTravelType:string;
 }

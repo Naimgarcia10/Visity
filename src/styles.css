@@ -1,3 +1,31 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Crear espacio para el header fijo */
+body {
+  padding-top: 105px; /* Mismo alto que el header */
+}
+
+:root{
+    --blue: #98dded;
+    --gray: #cfd8cd;
+    --green: #d6e7cd;
+    --pink: #f8beb9;
+    --yellow: #fbe4b0;
+    --header-bg: linear-gradient(90deg, var(--pink), var(--blue), var(--green));
+
+}
+
 #splash-screen {
     position: fixed;
     top: 0; left: 0;
@@ -9,4 +37,9 @@
     justify-content: center;
     z-index: 9999;
     font-family: sans-serif;
+}
+
+.pac-container {
+  z-index: 9999 !important; /* 🔥 Más alto que cualquier modal */
+  position: absolute !important;
 }

@@ -1,0 +1,27 @@
+<div class="suggestions-container">
+  <h3 class="suggestions-title">👥 Usuarios que te podrían interesar</h3>
+
+  <div *ngFor="let user of suggestions" class="suggestion-card">
+    <img [src]="user.profilePic" alt="Foto perfil" class="profile-pic" />
+    <div class="user-info">
+      <p class="username"><strong>{{ user.username }}</strong></p>
+      <p class="match-score">🎯 Coincidencia: {{ user.matchScore }}</p>
+    </div>
+    <button 
+      *ngIf="!user.isFollowed" 
+      class="follow-btn"
+      (click)="follow(user.username, user)">
+      Seguir
+    </button>
+    <button 
+      *ngIf="user.isFollowed" 
+      class="unfollow-btn"
+      (click)="unfollow(user.username, user)">
+      Dejar de seguir
+    </button>
+  </div>
+
+  <div *ngIf="!loading && suggestions.length === 0" class="no-suggestions">
+    <p>No hay sugerencias en este momento.</p>
+  </div>
+</div>

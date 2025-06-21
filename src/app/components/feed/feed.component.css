@@ -1,0 +1,114 @@
+/* .feed-layout {
+  display: grid;
+  grid-template-columns: 250px 1fr 300px;
+  gap: 2rem;
+  padding: 2rem;
+  transition: filter 0.3s ease;
+} */
+
+.feed-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  padding: 2rem;
+  transition: filter 0.3s ease;
+}
+
+
+/* Difuminado cuando se muestra el modal */
+.feed-layout.blurred {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* COLUMNAS */
+/* .left-column, .right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+} */
+
+.left-column, .right-column {
+  width: 375px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+
+/* .feed-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+} */
+
+.feed-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 760px; /* 720px de post + ~40px de padding */
+  width: 100%;
+  margin: 0 auto;
+}
+
+
+.create-post-button-inside {
+  display: flex;
+  justify-content: center;
+}
+
+.create-post-button-inside button {
+  padding: 0.8rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--blue);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 100%;
+  max-width: 200px;
+  transition: background-color 0.3s ease;
+}
+
+.create-post-button-inside button:hover {
+  background-color: #0056b3;
+}
+
+/* FONDO DIFUMINADO + BLOQUEO */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+/* MODAL DE CREACIÓN */
+.create-post-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90vw;
+  max-width: 1200px; /* Ancho actualizado */
+  max-height: none;   /* ✅ Quitamos límite de altura */
+  overflow: visible;  /* ✅ Permitimos que el scroll lo controle el hijo */
+  z-index: 1001;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.coldstart-text {
+  font-family: 'Segoe UI', 'Poppins', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #5a3e00;
+  letter-spacing: 0.3px;
+}

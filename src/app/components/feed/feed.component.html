@@ -1,16 +1,37 @@
-<div class="feed-container">
+<app-header></app-header>
 
-  <ng-container *ngIf="posts.length === 0">
-    <p>No hay posts de usuarios a los que sigues.</p>
-  </ng-container>
+<div class="feed-layout" [class.blurred]="showCreatePostButton">
+  <!-- IZQUIERDA -->
+  <div class="left-column">
+    <app-user-search (followingChanged)="refreshFeed()"></app-user-search>
+    <app-suggested-users (followingChanged)="refreshFeed()"></app-suggested-users>
 
-  <button (click)="logout()">Cerrar Sesion</button>
-  <button (click)="followUser()">Seguir</button>
-  <!-- <button (click)="loadMore()">Cargar más</button> -->
-  <a routerLink="/home" class="btn btn-secondary">Home</a>
-  <!-- <img src="{{ global.logo }}" alt="Logotipo Visity" class="img-fluid"> -->
+    <!-- ✅ Botón dentro de la columna izquierda -->
+    <div class="create-post-button-inside">
+      <button (click)="showCreatePostButton = true">➕ Crear Post</button>
+    </div>
+  </div>
 
-  <ng-container *ngIf="posts.length > 0">
-    <app-post *ngFor="let post of posts" [post]="post"></app-post>
-  </ng-container>
+  <!-- CENTRO -->
+  <div class="feed-column">
+    <ng-container *ngIf="isColdStart && filteredPosts.length > 0">
+      <span class="coldstart-text">✨ Te mostramos posts populares según tu tipo de viaje preferido.</span>
+    </ng-container>
+
+    <ng-container *ngIf="filteredPosts.length > 0">
+      <app-post *ngFor="let post of filteredPosts" [post]="post" (liked)="onPostLiked()"></app-post>
+    </ng-container>
+  </div>
+
+  <!-- DERECHA -->
+  <div class="right-column">
+    <app-post-filter (filtersChanged)="applyFilters($event)"></app-post-filter>
+  </div>
+</div>
+
+<!-- MODAL CREADOR DE POST -->
+<div class="overlay-backdrop" *ngIf="showCreatePostButton" (click)="closeCreatePost()"></div>
+
+<div class="create-post-modal" *ngIf="showCreatePostButton">
+  <app-create-post (postCreated)="onPostCreated()" (close)="closeCreatePost()"></app-create-post>
 </div>

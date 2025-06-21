@@ -1,88 +1,123 @@
-import { Component, OnInit, NgZone, inject } from '@angular/core';
+import { Component, OnInit, NgZone, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { PostComponent } from '../post/post.component';
 import { PostService } from '../../shared/post.service';
 import { AuthService } from '../../shared/auth.service';
 import { Post } from '../../models/post.model';
-import { FollowService } from '../../shared/follow.service';
-import { GlobalService } from '../../shared/global.service'; 
+import { UserModel } from '../../models/user_model';
+import { HeaderComponent } from '../header/header.component';
+import { PostFilterComponent } from '../post-filter/post-filter.component';
+import { UserSearchComponent } from '../user-search/user-search.component';
+import { CreatePostComponent } from '../create-post/create-post.component';
+import { SuggestedUsersComponent } from "../suggested-users/suggested-users.component";
 
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, RouterModule, PostComponent],
+  imports: [
+    CommonModule,
+    RouterModule,
+    PostComponent,
+    HeaderComponent,
+    PostFilterComponent,
+    UserSearchComponent,
+    CreatePostComponent,
+    SuggestedUsersComponent
+],
   templateUrl: './feed.component.html',
   styleUrls: ['./feed.component.css']
 })
 export class FeedComponent implements OnInit {
   posts: Post[] = [];
-  global  = inject(GlobalService);
+  filteredPosts: Post[] = [];
+  currentFilters: { travelType: string[], budget: string[], weather: string[] } = {
+  travelType: [],
+  budget: [],
+  weather: []
+};
+showCreatePostButton = false; 
+coldStartPosts: Post[] = [];
+isColdStart: boolean = false;
+@ViewChild(SuggestedUsersComponent) suggestedUsersComp!: SuggestedUsersComponent;
+
 
   constructor(
     private postService: PostService,
-    private followService: FollowService,
     private authService: AuthService,
     private router: Router,
     private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
-    const user = this.authService.getCurrentUser();
-
-    if (!user) {
-      console.warn('Usuario no autenticado');
-      this.ngZone.run(() => {
-        this.router.navigate(['/login']);
-      });
-      return;
-    }
-
-    try {
-      const posts = await this.postService.getPosts(user.uid);
-      this.ngZone.run(() => {
-        this.posts = posts;
-      });
-    } catch (error) {
-      console.error('Error cargando feed:', error);
-    }
+    await this.refreshFeed(); 
   }
 
-  logout() {
-    this.authService.logout().then(() => {
-      this.ngZone.run(() => {
-        console.log('Usuario desconectado');
-        this.router.navigate(['/login']);
-      });
-    }).catch(error => {
-      console.error('Error al cerrar sesión:', error);
+  async refreshFeed() {
+  const user = await this.authService.getCurrentUser();
+  if (!user) {
+    console.warn('Usuario no autenticado');
+    this.ngZone.run(() => this.router.navigate(['/login']));
+    return;
+  }
+
+  try {
+    const posts = await this.postService.getPosts(user.uid);
+    const userData = await this.authService.getUserById(user.uid) as UserModel;
+
+    this.ngZone.run(async () => {
+      this.posts = posts;
+
+      const filtersActive = Object.values(this.currentFilters).some(f => f.length > 0);
+
+      if (posts.length === 0 && userData.preferredTravelType) {
+        this.isColdStart = true;
+        this.coldStartPosts = await this.postService.getPopularPostsByPreferredTravelType(userData.preferredTravelType);
+        this.filteredPosts = [...this.coldStartPosts];
+      } else {
+        this.isColdStart = false;
+        this.filteredPosts = filtersActive ? this.applyFiltersReturn(this.currentFilters) : [...posts];
+      }
     });
+  } catch (error) {
+    console.error('Error refrescando el feed:', error);
+  }
+}
+
+applyFilters(filters: { travelType: string[], budget: string[], weather: string[] }) {
+  this.currentFilters = filters;
+
+  const source = this.isColdStart ? this.coldStartPosts : this.posts;
+
+  this.filteredPosts = this.applyFiltersReturn(filters, source);
+}
+
+
+applyFiltersReturn(
+  filters: { travelType: string[], budget: string[], weather: string[] },
+  sourcePosts: Post[] = this.posts
+): Post[] {
+  return sourcePosts.filter(post => {
+    const matchTravel = filters.travelType.length === 0 || filters.travelType.some(tag => post.travelType.includes(tag));
+    const matchBudget = filters.budget.length === 0 || filters.budget.includes(post.budget);
+    const matchWeather = filters.weather.length === 0 || filters.weather.includes(post.weather);
+    return matchTravel && matchBudget && matchWeather;
+  });
+}
+
+
+  closeCreatePost() {
+    this.showCreatePostButton = false;
   }
 
-  async followUser() {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.warn('Usuario no autenticado');
-      return;
-    }
-
-    const currentUsername = await this.authService.getUsernameById(currentUser.uid);
-    if (!currentUsername) {
-      console.warn('No se pudo obtener el nombre de usuario del usuario actual');
-      return;
-    }
-
-    const followedUsername = 'santi10'; 
-
-    this.followService.followUserByUsername(currentUsername, followedUsername)
-      .subscribe({
-        next: () => {
-          console.log(`Ahora sigues a ${followedUsername}`);
-        },
-        error: (error) => {
-          console.error('Error al seguir al usuario:', error);
-        }
-      });
+  onPostCreated() {
+    this.closeCreatePost();
+    this.refreshFeed(); // Opcional, recarga los posts tras crear
   }
 
+  onPostLiked() {
+    if (this.suggestedUsersComp) {
+      this.suggestedUsersComp.refreshSuggestions(); // ✅ Método que definiremos ahora
+    }
+  }
 }

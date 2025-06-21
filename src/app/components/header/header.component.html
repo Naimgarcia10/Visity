@@ -1,0 +1,11 @@
+<header class="app-header" [class.header-hidden]="!isHeaderVisible">
+  <div class="left-section">
+    <img [src]="global.logo" alt="Logo Visity" class="logo" />
+    <span class="brand-name">Visity</span>
+  </div>
+
+  <div class="right-section">
+    <p class="welcome">Bienvenido, <strong>{{currentUserName}}</strong></p>
+    <button (click)="logout()" class="logout-btn">Cerrar Sesión</button>
+  </div>
+</header>

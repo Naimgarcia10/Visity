@@ -6,13 +6,14 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GoogleMapsService, Waypoint } from '../../shared/maps.service';
 import { PostService } from '../../shared/post.service'; // Importar el servicio
+import { FileToUrlPipe } from '../../shared/global.service';
 
 @Component({
   selector: 'app-create-post',
   templateUrl: './create-post.component.html',
   styleUrls: ['./create-post.component.css'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, FileToUrlPipe],
   host: { 'ngSkipHydration': '' }
 })
 export class CreatePostComponent implements OnInit {
@@ -49,6 +50,7 @@ export class CreatePostComponent implements OnInit {
   statusMessage: string = '';
   showStatusMessage: boolean = false;
   imageFiles: File[] = [];
+  currentImageIndex: number = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -407,5 +409,17 @@ export class CreatePostComponent implements OnInit {
     this.mapsService.clearWaypoints();
     this.mapsService.clearSearchBox();
     this.ngOnInit(); // Re-inicializar el mapa
+  }
+
+  nextImage() {
+    if (this.imageFiles && this.currentImageIndex < this.imageFiles.length - 1) {
+      this.currentImageIndex++;
+    }
+  }
+
+  prevImage() {
+    if (this.currentImageIndex > 0) {
+      this.currentImageIndex--;
+    }
   }
 }
