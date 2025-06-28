@@ -6,10 +6,12 @@
 
   <div class="results" *ngIf="results.length > 0">
     <div *ngFor="let user of results" class="user-result">
-      <div class="user-info">
-        <img [src]="user.profilePic" alt="Foto" class="profile-pic" />
-        <span>{{ user.username }}</span>
-      </div>
+      <a [routerLink]="['/profile', user.username]" class="profile-link">
+        <div class="user-info">
+          <img [src]="user.profilePic" alt="Foto" class="profile-pic" />
+          <span>{{ user.username }}</span>
+        </div>
+      </a>
       <button *ngIf="!user.isFollowed" (click)="follow(user.username, user)">Seguir</button>
       <button *ngIf="user.isFollowed" class="unfollow" (click)="unfollow(user.username, user)">Dejar de seguir</button>
     </div>

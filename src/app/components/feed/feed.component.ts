@@ -11,6 +11,8 @@ import { PostFilterComponent } from '../post-filter/post-filter.component';
 import { UserSearchComponent } from '../user-search/user-search.component';
 import { CreatePostComponent } from '../create-post/create-post.component';
 import { SuggestedUsersComponent } from "../suggested-users/suggested-users.component";
+import { FollowService } from '../../shared/follow.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-feed',
@@ -45,6 +47,7 @@ isColdStart: boolean = false;
   constructor(
     private postService: PostService,
     private authService: AuthService,
+    private followService: FollowService,
     private router: Router,
     private ngZone: NgZone
   ) {}
@@ -61,28 +64,40 @@ isColdStart: boolean = false;
     return;
   }
 
-  try {
-    const posts = await this.postService.getPosts(user.uid);
-    const userData = await this.authService.getUserById(user.uid) as UserModel;
+  const username = await this.authService.getUsernameById(user.uid);
+  if (!username) {
+    return;
+  }
 
+  try {
+    const [posts, userData, followedIds] = await Promise.all([
+      this.postService.getPosts(user.uid),
+      this.authService.getUserById(user.uid) as Promise<UserModel>,
+      firstValueFrom(this.followService.getFollowing(username))  // 👈 Aquí usas el método de follows
+    ]);
+    
     this.ngZone.run(async () => {
       this.posts = posts;
-
       const filtersActive = Object.values(this.currentFilters).some(f => f.length > 0);
 
-      if (posts.length === 0 && userData.preferredTravelType) {
+      const isCold = followedIds.length === 0;
+
+      if (isCold && userData.preferredTravelType) {
         this.isColdStart = true;
         this.coldStartPosts = await this.postService.getPopularPostsByPreferredTravelType(userData.preferredTravelType);
         this.filteredPosts = [...this.coldStartPosts];
       } else {
         this.isColdStart = false;
-        this.filteredPosts = filtersActive ? this.applyFiltersReturn(this.currentFilters) : [...posts];
+        this.filteredPosts = filtersActive
+          ? this.applyFiltersReturn(this.currentFilters)
+          : [...posts];
       }
     });
   } catch (error) {
     console.error('Error refrescando el feed:', error);
   }
 }
+
 
 applyFilters(filters: { travelType: string[], budget: string[], weather: string[] }) {
   this.currentFilters = filters;
@@ -112,12 +127,12 @@ applyFiltersReturn(
 
   onPostCreated() {
     this.closeCreatePost();
-    this.refreshFeed(); // Opcional, recarga los posts tras crear
+    this.refreshFeed(); 
   }
 
   onPostLiked() {
     if (this.suggestedUsersComp) {
-      this.suggestedUsersComp.refreshSuggestions(); // ✅ Método que definiremos ahora
+      this.suggestedUsersComp.refreshSuggestions(); 
     }
   }
 }

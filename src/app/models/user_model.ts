@@ -5,7 +5,5 @@ export interface UserModel {
   fullname: string;
   birthdate: string;
   profilePic: string;
-  followersCount: number;
-  followingCount: number;
   preferredTravelType:string;
 }

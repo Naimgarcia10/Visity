@@ -21,6 +21,11 @@
   margin-bottom: 1rem;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
 .profile-pic {
   width: 45px;
   height: 45px;
@@ -33,6 +38,16 @@
 .author-id {
   font-weight: 600;
   color: #e0576e;
+}
+
+a.profile-link,
+a.author-id {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.author-id:hover {
+  text-decoration: underline;
 }
 
 .post-date {

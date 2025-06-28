@@ -1,4 +1,4 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, NgZone, inject } from '@angular/core';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule, FormArray } from '@angular/forms';
 import { AuthService } from '../../shared/auth.service';
 import { UserModel } from '../../models/user_model';
@@ -8,6 +8,8 @@ import { RouterModule, Router } from '@angular/router';
 import { Auth, sendEmailVerification, createUserWithEmailAndPassword } from '@angular/fire/auth';
 import { Firestore, doc, setDoc } from '@angular/fire/firestore';
 import { usernameAvailableValidator } from '../../validators/username-async.validator';
+import { GlobalService } from '../../shared/global.service';
+import { HeaderComponent } from "../header/header.component";
 
 
 @Component({
@@ -19,10 +21,12 @@ import { usernameAvailableValidator } from '../../validators/username-async.vali
     ReactiveFormsModule,
     CommonModule,
     RouterModule,
-  ],
+    HeaderComponent
+],
   providers: [FireStorageMngService]
 })
 export class RegisterComponent implements OnInit {
+  global = inject(GlobalService);
   user: UserModel = {
     uid: '',
     email: '',
@@ -30,8 +34,6 @@ export class RegisterComponent implements OnInit {
     fullname: '',
     birthdate: '',
     profilePic: '',
-    followersCount: 0,
-    followingCount: 0,
     preferredTravelType: ''
   };
   imageUrl: string = '';
@@ -216,6 +218,4 @@ export class RegisterComponent implements OnInit {
       this.preferredTravelType.setValue(selectedTag);
     }
   }
-
-
 }

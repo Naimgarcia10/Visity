@@ -50,6 +50,11 @@
   gap: 0.8rem;
 }
 
+a.profile-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 .profile-pic {
   width: 42px;
   height: 42px;

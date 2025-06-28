@@ -1,5 +1,5 @@
 import { Injectable, inject, NgZone } from '@angular/core';
-import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { Storage, ref, uploadBytes, getDownloadURL, FirebaseStorage } from '@angular/fire/storage';
 
 @Injectable({
   providedIn: 'root'
@@ -35,5 +35,9 @@ export class FireStorageMngService {
       this.ngZone.run(() => console.error('Error uploading multiple files:', error));
       throw error;
     }
+  }
+
+  public getStorage(): FirebaseStorage {
+    return this.storage;
   }
 }

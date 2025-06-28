@@ -1,8 +1,8 @@
-import { Component, inject, NgZone, HostListener, OnInit } from '@angular/core';
+import { Component, inject, NgZone, HostListener, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { AuthService } from '../../shared/auth.service';
 import { RouterModule, Router } from '@angular/router';
 import { GlobalService } from '../../shared/global.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-header',
@@ -17,49 +17,49 @@ export class HeaderComponent implements OnInit {
   lastScrollPosition = 0;
   scrollThreshold = 30; 
   currentUserName: string | null = null;
-  
+  currentUserProfilePic: string | null = null;
+  isBrowser: boolean;
+
   constructor(
     private authService: AuthService,
     private router: Router,
-    private ngZone: NgZone
-  ) {}
+    private ngZone: NgZone,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   async ngOnInit(): Promise<void> {
-    this.lastScrollPosition = window.scrollY;
+    if (this.isBrowser) {
+      this.lastScrollPosition = window.scrollY;
+    }
+
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
       this.currentUserName = await this.authService.getUsernameById(currentUser.uid);
+      this.currentUserProfilePic = await this.authService.getProfilePicById(currentUser.uid);
     } else {
       this.currentUserName = null;
+      this.currentUserProfilePic = null;
     }
   }
 
   @HostListener('window:scroll', ['$event'])
   onWindowScroll() {
-    // Obtener posición actual
+    if (!this.isBrowser) return;
+
     const currentScrollPosition = window.scrollY;
-    
-    // Verificar si estamos en la parte superior
+
     if (currentScrollPosition <= 10) {
       this.isHeaderVisible = true;
       this.lastScrollPosition = currentScrollPosition;
       return;
     }
-    
-    // Verificar si el cambio de posición excede el umbral
+
     const scrollDifference = Math.abs(currentScrollPosition - this.lastScrollPosition);
-    
+
     if (scrollDifference > this.scrollThreshold) {
-      // Desplazamiento hacia abajo: ocultar header
-      if (currentScrollPosition > this.lastScrollPosition) {
-        this.isHeaderVisible = false;
-      } 
-      // Desplazamiento hacia arriba: mostrar header
-      else {
-        this.isHeaderVisible = true;
-      }
-      
-      // Actualizar última posición
+      this.isHeaderVisible = currentScrollPosition < this.lastScrollPosition;
       this.lastScrollPosition = currentScrollPosition;
     }
   }
@@ -74,8 +74,4 @@ export class HeaderComponent implements OnInit {
       console.error('Error al cerrar sesión:', error);
     });
   }
-
-
-
-
 }

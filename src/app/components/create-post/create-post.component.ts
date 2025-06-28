@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, inject, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormArray, FormControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { GoogleMapsService, Waypoint } from '../../shared/maps.service';
 import { PostService } from '../../shared/post.service'; // Importar el servicio
 import { FileToUrlPipe } from '../../shared/global.service';
+import { FireStorageMngService } from '../../shared/fire-storage-mng.service';
 
 @Component({
   selector: 'app-create-post',
@@ -17,6 +18,7 @@ import { FileToUrlPipe } from '../../shared/global.service';
   host: { 'ngSkipHydration': '' }
 })
 export class CreatePostComponent implements OnInit {
+  private fireStorage: FireStorageMngService = inject(FireStorageMngService);
   postForm: FormGroup;
   isSubmitting = false;
   imageFile: File | null = null;
@@ -51,12 +53,13 @@ export class CreatePostComponent implements OnInit {
   showStatusMessage: boolean = false;
   imageFiles: File[] = [];
   currentImageIndex: number = 0;
+  @Output() onPostCreated = new EventEmitter<void>();
 
   constructor(
     private fb: FormBuilder,
     private mapsService: GoogleMapsService,
     private postService: PostService,
-    private router: Router
+    private router: Router,
   ) {
     this.postForm = this.fb.group({
       text: ['', [Validators.required, Validators.maxLength(500)]],
@@ -248,34 +251,71 @@ export class CreatePostComponent implements OnInit {
    * Si se seleccionan más de 10 imágenes, se muestra un mensaje de advertencia
    * y no se procesan los archivos.
    */
-  onImageUpload(event: any): void {
+    /* onImageUpload(event: any): void {
     const files = event.target.files;
-    if (files && files.length > 0) {
-      // Limitar a 10 imágenes
-      if (files.length > 10) {
-        this.mostrarMensaje('Solo puedes subir hasta 10 imágenes');
-        return;
-      }
-      
-      // Guardar todos los archivos seleccionados
-      this.imageFiles = Array.from(files);
-      
-      // Usar la primera imagen como vista previa
-      this.imageFile = files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.imageUrl = reader.result as string;
-      };
-      if (this.imageFile) {
-        reader.readAsDataURL(this.imageFile);
-      }
-      
-      // Mostrar mensaje informativo
-      if (files.length > 1) {
-        this.mostrarMensaje(`Se han seleccionado ${files.length} imágenes`);
-      }
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files) as File[];
+
+    // Unir los nuevos con los ya existentes
+    const combinedFiles: File[] = [...this.imageFiles, ...newFiles];
+
+    // Filtrar duplicados por nombre y tamaño
+    const uniqueFiles = combinedFiles.filter((file, index, self) =>
+      index === self.findIndex(f => f.name === file.name && f.size === file.size)
+    );
+
+    const uniqueImages = combinedFiles.filter(
+        (file, index, self) =>
+          index === self.findIndex(f => f.name === file.name && f.size === file.size)
+      );
+
+    if (uniqueFiles.length > 10) {
+      this.mostrarMensaje('Solo puedes subir hasta 10 imágenes');
+      return;
     }
+
+    this.imageFiles = uniqueFiles;
+
+    // Mostrar vista previa de la primera imagen
+    this.imageFile = this.imageFiles[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imageUrl = reader.result as string;
+    };
+    reader.readAsDataURL(this.imageFile);
+
+    if (this.imageFiles.length > 1) {
+      this.mostrarMensaje(`Se han seleccionado ${this.imageFiles.length} imágenes`);
+    }
+  } */
+ onImageUpload(event: any): void {
+  const files = Array.from(event.target.files || []) as File[];
+
+  const combinedFiles = [...this.imageFiles, ...files];
+  const uniqueFiles = combinedFiles.filter(
+    (file, index, self) =>
+      index === self.findIndex(f => f.name === file.name && f.size === file.size)
+  );
+
+  if (uniqueFiles.length > 10) {
+    this.mostrarMensaje('Solo puedes subir hasta 10 imágenes');
+    return;
   }
+
+  this.imageFiles = uniqueFiles;
+  this.imageFile = this.imageFiles[0];
+
+  const reader = new FileReader();
+  reader.onload = () => this.imageUrl = reader.result as string;
+  if (this.imageFile) reader.readAsDataURL(this.imageFile);
+
+  if (this.imageFiles.length > 1) {
+    this.mostrarMensaje(`Se han seleccionado ${this.imageFiles.length} imágenes`);
+  }
+}
+
+
 
   /**
    * Envía un nuevo post utilizando los datos proporcionados en el formulario.
@@ -293,62 +333,120 @@ export class CreatePostComponent implements OnInit {
    * 
    * @throws {Error} Si ocurre un error durante la creación del post, se captura y se muestra un mensaje de error al usuario.
    */
-  async submitPost(): Promise<void> {
-    if (this.postForm.valid) {
-      try {
-        this.isSubmitting = true;
-        this.statusMessage = 'Publicando...';
-        this.showStatusMessage = true;
-        
-        // Obtener los valores del formulario
-        const content = this.postForm.get('text')?.value;
-        const tipoViaje = this.postForm.get('tipoViaje')?.value || [];
-        const presupuesto = this.selectedPresupuesto || '';
-        const clima = this.selectedClima || '';
-        
-        // Crear un array con todas las imágenes (incluida la del itinerario si existe)
-        const imagesToUpload: File[] = [...this.imageFiles];
-        
-        // Convertir la imagen del itinerario a File si existe
-        if (this.itinerarioImagenUrl) {
-          try {
-            const response = await fetch(this.itinerarioImagenUrl);
-            const blob = await response.blob();
-            const itineraryFile = new File([blob], 'itinerary.png', { type: 'image/png' });
-            imagesToUpload.push(itineraryFile);
-          } catch (error) {
-            console.error('Error al convertir la imagen del itinerario:', error);
-          }
+  /* async submitPost(): Promise<void> {
+  if (this.postForm.valid) {
+    try {
+      this.isSubmitting = true;
+      this.statusMessage = 'Publicando...';
+      this.showStatusMessage = true;
+
+      // Obtener los valores del formulario
+      const content = this.postForm.get('text')?.value;
+      const tipoViaje = this.postForm.get('tipoViaje')?.value || [];
+      const presupuesto = this.selectedPresupuesto || '';
+      const clima = this.selectedClima || '';
+
+      // Crear array con imágenes seleccionadas
+      let imagesToUpload: File[] = [...this.imageFiles];
+
+      // Añadir imagen del itinerario si existe
+      if (this.itinerarioImagenUrl) {
+        try {
+          const response = await fetch(this.itinerarioImagenUrl);
+          const blob = await response.blob();
+          const itineraryFile = new File([blob], 'itinerary.png', { type: 'image/png' });
+          imagesToUpload.push(itineraryFile);
+        } catch (error) {
+          console.error('Error al convertir la imagen del itinerario:', error);
         }
-        
-        // Usar el servicio para crear el post
-        const postId = await this.postService.createPost(
-          content,
-          imagesToUpload,
-          this.googleMapsUrl || '',
-          tipoViaje,
-          presupuesto,
-          clima
-        );
-        
-        console.log('Post creado con ID:', postId);
-        this.mostrarMensaje('¡Post publicado con éxito!', 2000);
-        
-        // Resetear el formulario y los estados
-        this.resetFormAndStates();
-        
-        // Redirigir a la página principal
-        setTimeout(() => {
-          this.router.navigate(['/feed']);
-        }, 2000);
-      } catch (error) {
-        console.error('Error al crear el post:', error);
-        this.mostrarMensaje('Error al publicar el post. Por favor, inténtalo de nuevo.', 3000);
-      } finally {
-        this.isSubmitting = false;
       }
+
+      // 🔍 Filtrar imágenes duplicadas por nombre + tamaño
+      const uniqueImages = imagesToUpload.filter(
+        (file, index, self) =>
+          index === self.findIndex(f => f.name === file.name && f.size === file.size)
+      );
+
+      // Subir post con imágenes únicas
+      const postId = await this.postService.createPost(
+        content,
+        uniqueImages,
+        this.googleMapsUrl || '',
+        tipoViaje,
+        presupuesto,
+        clima
+      );
+
+      console.log('Post creado con ID:', postId);
+      this.mostrarMensaje('¡Post publicado con éxito!', 2000);
+
+      this.resetFormAndStates();
+
+      // Redirigir al feed tras 2 segundos
+      setTimeout(() => {
+        this.router.navigate(['/feed']);
+      }, 2000);
+    } catch (error) {
+      console.error('Error al crear el post:', error);
+      this.mostrarMensaje('Error al publicar el post. Por favor, inténtalo de nuevo.', 3000);
+    } finally {
+      this.isSubmitting = false;
     }
   }
+} */
+
+  async submitPost(): Promise<void> {
+    if (!this.postForm.valid || this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    try {
+      const content = this.postForm.get('text')?.value;
+      const tipoViaje = this.postForm.get('tipoViaje')?.value || [];
+      const presupuesto = this.selectedPresupuesto || '';
+      const clima = this.selectedClima || '';
+
+
+      this.showStatusMessage = true;
+      this.statusMessage = 'Subiendo imágenes...';
+
+      // Subir imágenes al storage y obtener sus URLs
+      const imageUploadPromises = this.imageFiles.map(file =>
+        this.fireStorage.uploadFile(file, 'posts')
+      );
+      const imageURLs = await Promise.all(imageUploadPromises);
+
+      // Si hay imagen del itinerario, subirla también
+      if (this.itinerarioImagenUrl) {
+        const response = await fetch(this.itinerarioImagenUrl);
+        const blob = await response.blob();
+        const itineraryFile = new File([blob], 'itinerary.png', { type: 'image/png' });
+        const itineraryURL = await this.fireStorage.uploadFile(itineraryFile, 'posts');
+        imageURLs.push(itineraryURL);
+      }
+
+      this.statusMessage = 'Publicando post...';
+
+      await this.postService.createPost(
+        content,
+        imageURLs,
+        this.googleMapsUrl || '',
+        tipoViaje,
+        presupuesto,
+        clima
+      );
+
+      this.statusMessage = '¡Post publicado!';
+      this.resetFormAndStates();
+      this.onPostCreated.emit(); // si usas EventEmitter
+    } catch (error) {
+      this.mostrarMensaje('Error al publicar el post');
+      console.error(error);
+    } finally {
+      this.isSubmitting = false;
+      setTimeout(() => this.showStatusMessage = false, 3000);
+    }
+  }
+
 
 /**
  * Restablece el formulario y los estados asociados en el componente.

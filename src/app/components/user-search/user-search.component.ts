@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FollowService } from '../../shared/follow.service';
 import { AuthService } from '../../shared/auth.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-user-search',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './user-search.component.html',
   styleUrls: ['./user-search.component.css']
 })

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { MatchingService } from '../../shared/matching.service';
 import { AuthService } from '../../shared/auth.service';
 import { FollowService } from '../../shared/follow.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-suggested-users',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './suggested-users.component.html',
   styleUrls: ['./suggested-users.component.css']
 })
@@ -15,8 +16,9 @@ export class SuggestedUsersComponent implements OnInit {
   suggestions: any[] = [];
   currentUsername: string = '';
   loading = true;
+  isFollowed: boolean = false;
   
-  @Output() followingChanged = new EventEmitter<void>(); // ✅ Emisor de evento
+  @Output() followingChanged = new EventEmitter<void>(); 
 
   constructor(
     private matchingService: MatchingService,
@@ -32,13 +34,21 @@ export class SuggestedUsersComponent implements OnInit {
       this.suggestions = await this.matchingService.getSuggestedUsers(user.uid);
     }
     this.loading = false;
+    this.suggestions.forEach(user => {
+      user.isFollowed = false; 
+      this.followService.isFollowing(this.currentUsername, user.username).subscribe(isFollowed => {
+        user.isFollowed = isFollowed; 
+      });
+    });
+
+
   }
 
   follow(username: string, user: any) {
     this.followService.followUserByUsername(this.currentUsername, username).subscribe({
       next: () => {
         user.isFollowed = true;
-        this.followingChanged.emit(); // ✅ Notificar al padre
+        this.followingChanged.emit(); 
       },
       error: err => console.error('Error al seguir:', err)
     });
@@ -48,7 +58,7 @@ export class SuggestedUsersComponent implements OnInit {
     this.followService.unfollowUserByUsername(this.currentUsername, username).subscribe({
       next: () => {
         user.isFollowed = false;
-        this.followingChanged.emit(); // ✅ Notificar al padre
+        this.followingChanged.emit(); 
       },
       error: err => console.error('Error al dejar de seguir:', err)
     });

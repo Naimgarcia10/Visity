@@ -1,0 +1,92 @@
+<app-header></app-header>
+
+<div class="profile-wrapper" *ngIf="user">
+  <div class="profile-card">
+    <div class="profile-header">
+      <img [src]="user.profilePic" alt="Foto de perfil" class="profile-pic" />
+      <div class="profile-info">
+        <h2>{{ user.fullname }}</h2>
+        <p>{{ '@' + user.username }}</p>
+        <p *ngIf="user.preferredTravelType" class="travel-type">
+          <strong>Tipo de viaje preferido:</strong> {{ user.preferredTravelType }}
+        </p>
+      </div>
+    </div>
+
+    <div class="profile-stats">
+      <div><strong>{{ followersCount }}</strong><span>Seguidores</span></div>
+      <div><strong>{{ followingCount }}</strong><span>Siguiendo</span></div>
+      <div><strong>{{ postCount }}</strong><span>Posts</span></div>
+    </div>
+
+    <div class="follow-button-container" *ngIf="!isOwnProfile && isFollowing !== null">
+      <button
+        (click)="toggleFollow()"
+        class="follow-button"
+        [ngClass]="{ 'following': isFollowing }"
+        (mouseenter)="hoveringFollowBtn = true"
+        (mouseleave)="hoveringFollowBtn = false"
+      >
+        {{ isFollowing ? (hoveringFollowBtn ? 'Dejar de seguir' : 'Siguiendo') : 'Seguir' }}
+      </button>
+    </div>
+
+
+    <div class="account-actions grouped-buttons" *ngIf="isOwnProfile">
+      <button class="edit-button" (click)="toggleEditProfile()">
+        {{ showEditForm ? 'Cancelar edición' : 'Editar perfil' }}
+      </button>
+
+      <button class="danger-button" (click)="toggleDeleteForm()">
+        {{ showDeleteForm ? 'Cancelar' : 'Eliminar cuenta' }}
+      </button>
+    </div>
+
+
+    <!-- Formulario que aparece solo si showDeleteForm es true -->
+    <div class="delete-account-section" *ngIf="isOwnProfile && showDeleteForm">
+      <h4>Eliminar cuenta</h4>
+      <p>Introduce tu contraseña para confirmar esta acción irreversible:</p>
+
+      <input type="password" [(ngModel)]="passwordToConfirm" placeholder="Contraseña" />
+      <button class="danger-button" (click)="onDeleteAccount()">Eliminar cuenta</button>
+
+      <p *ngIf="deletionError" class="error">{{ deletionError }}</p>
+    </div>
+
+<!-- Formulario de edición -->
+<div class="edit-profile-section" *ngIf="isOwnProfile && showEditForm">
+  <h4>Editar perfil</h4>
+
+  <label>Nombre completo</label>
+  <input type="text" [(ngModel)]="editForm.fullname" />
+
+  <label>Nombre de usuario</label>
+  <input type="text" [(ngModel)]="editForm.username" />
+
+  <label>Fecha de nacimiento</label>
+  <input type="date" [(ngModel)]="editForm.birthdate" />
+
+  <label>Tipo de viaje preferido</label>
+  <select [(ngModel)]="editForm.preferredTravelType">
+    <option value="">-- Selecciona una opción --</option>
+    <option *ngFor="let option of travelTypes" [value]="option">{{ option }}</option>
+  </select>
+
+  <button class="primary-button" (click)="saveProfileChanges()">Guardar cambios</button>
+
+  <p *ngIf="editError" class="error">{{ editError }}</p>
+  <p *ngIf="editSuccess" class="success">{{ editSuccess }}</p>
+</div>
+
+
+  <div class="user-posts">
+    <h3>Tus publicaciones</h3>
+    <ng-container *ngIf="userPosts.length > 0; else noPosts">
+      <app-post *ngFor="let post of userPosts" [post]="post"></app-post>
+    </ng-container>
+    <ng-template #noPosts>
+      <p class="no-posts">Aún no has publicado ningún post.</p>
+    </ng-template>
+  </div>
+</div>

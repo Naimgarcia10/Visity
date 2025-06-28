@@ -40,6 +40,16 @@
   flex: 1;
 }
 
+a.profile-link,
+a.author-id {
+  text-decoration: none;
+  color: inherit;
+}
+
+a.author-id:hover {
+  text-decoration: underline;
+}
+
 .username {
   font-size: 0.95rem;
   margin: 0;

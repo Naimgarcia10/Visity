@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './shared/auth.guard';
+import path from 'path';
 
 export const routes: Routes = [
   {
@@ -16,13 +17,13 @@ export const routes: Routes = [
     loadComponent: () => import('./components/register/register.component').then(m => m.RegisterComponent),
   },
   {
-    path: 'home',
-    loadComponent: () => import('./components/home/home.component').then(m => m.HomeComponent),
+    path: 'feed',
+    loadComponent: () => import('./components/feed/feed.component').then(m => m.FeedComponent),
     canActivate: [AuthGuard],
   },
   {
-    path: 'feed',
-    loadComponent: () => import('./components/feed/feed.component').then(m => m.FeedComponent),
+    path: 'profile/:username',
+    loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent),
     canActivate: [AuthGuard],
   },
   {

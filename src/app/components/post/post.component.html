@@ -1,7 +1,25 @@
 <div class="post-card">
-  <div class="post-header">
+  <!-- <div class="post-header">
     <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
     <span class="author-id">{{ authorUsername }}</span>
+    <small class="post-date">{{ postTimeAgo }}</small>
+  </div> -->
+
+  <div class="post-header">
+    <!-- <a [routerLink]="['/profile', authorUsername]" class="profile-link">
+      <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
+    </a>
+
+    <a [routerLink]="['/profile', authorUsername]" class="author-id">
+      {{authorUsername }}
+    </a> -->
+    <a [routerLink]="['/profile', authorUsername]" class="profile-link">
+    <div class="user-info">
+        <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
+        <span class="author-id">{{ authorUsername }}</span>
+      </div>
+    </a>
+
     <small class="post-date">{{ postTimeAgo }}</small>
   </div>
 

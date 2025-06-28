@@ -87,37 +87,4 @@ export class MatchingService {
     return suggestions.sort((a, b) => b.matchScore - a.matchScore);
   }
 
-
-
-  private calculateMatchScore(
-    current: TagFrequencies,
-    other: TagFrequencies
-  ): number {
-    let score = 0;
-
-    // Match travelType con más peso
-    score += this.weightedMatch(current.travelType, other.travelType) * 3;
-
-    // Match budget
-    score += this.weightedMatch(current.budget, other.budget) * 2;
-
-    // Match weather
-    score += this.weightedMatch(current.weather, other.weather) * 2;
-
-    return score;
-  }
-
-  private weightedMatch(
-    currentFreq: Record<string, number>,
-    otherFreq: Record<string, number>
-  ): number {
-    let score = 0;
-    for (const tag in currentFreq) {
-      if (otherFreq[tag]) {
-        score += currentFreq[tag] * otherFreq[tag]; // Producto de frecuencias
-      }
-    }
-    return score;
-  }
-
 }

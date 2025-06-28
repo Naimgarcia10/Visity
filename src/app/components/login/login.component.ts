@@ -1,19 +1,21 @@
-import { Component, NgZone, OnInit } from '@angular/core';
+import { Component, inject, NgZone, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
-import { UserModel } from '../../models/user_model';
 import { CommonModule } from '@angular/common';
 import { Auth, sendPasswordResetEmail } from '@angular/fire/auth';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../shared/auth.service';
+import { HeaderComponent } from "../header/header.component";
+import { GlobalService } from '../../shared/global.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   standalone: true,
-  imports: [ReactiveFormsModule, CommonModule, RouterModule]
+  imports: [ReactiveFormsModule, CommonModule, RouterModule, HeaderComponent]
 })
 export class LoginComponent implements OnInit {
+  global = inject(GlobalService);
   formLogin: any;
   temporaryMessage: string = '';
 

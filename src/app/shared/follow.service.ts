@@ -38,10 +38,6 @@ export class FollowService {
     };
     
     return from(setDoc(followRef, followData)).pipe(
-      switchMap(() => {
-        // Actualizar los contadores en los documentos de usuario
-        return this.updateFollowCounts(followerUsername, followedUsername, 1);
-      }),
       map(() => ({
         success: true,
         followerId: followerUsername,
@@ -70,10 +66,6 @@ export class FollowService {
     const followRef = doc(this.firestore, `follows/${customId}`);
     
     return from(deleteDoc(followRef)).pipe(
-      switchMap(() => {
-        // Actualizar los contadores en los documentos de usuario (restar)
-        return this.updateFollowCounts(followerUsername, followedUsername, -1);
-      }),
       map(() => ({
         success: true,
         followerId: followerUsername,
@@ -141,35 +133,6 @@ export class FollowService {
       catchError(error => {
         console.error('Error al obtener seguidos:', error);
         return of([]);
-      })
-    );
-  }
-
-  /**
-   * Actualiza los contadores de following y followers en los documentos de usuario
-   * @param followerUsername Usuario que sigue
-   * @param followedUsername Usuario que es seguido
-   * @param incrementValue Valor de incremento (1 para seguir, -1 para dejar de seguir)
-   */
-  private updateFollowCounts(followerUsername: string, followedUsername: string, incrementValue: number): Observable<any> {
-    // Primero necesitamos obtener los IDs de documento de los usuarios por su username
-    return this.getUserIdByUsername(followerUsername).pipe(
-      switchMap(followerId => {
-        if (!followerId) throw new Error(`Usuario ${followerUsername} no encontrado`);
-        
-        return this.getUserIdByUsername(followedUsername).pipe(
-          switchMap(followedId => {
-            if (!followedId) throw new Error(`Usuario ${followedUsername} no encontrado`);
-            
-            const followerRef = doc(this.firestore, `users/${followerId}`);
-            const followedRef = doc(this.firestore, `users/${followedId}`);
-            
-            const updateFollower = updateDoc(followerRef, { followingCount: increment(incrementValue) });
-            const updateFollowed = updateDoc(followedRef, { followersCount: increment(incrementValue) });
-            
-            return from(Promise.all([updateFollower, updateFollowed]));
-          })
-        );
       })
     );
   }

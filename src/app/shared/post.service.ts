@@ -16,7 +16,6 @@ import {
   updateDoc,
   limit
 } from '@angular/fire/firestore';
-import { FireStorageMngService } from './fire-storage-mng.service';
 import { Auth } from '@angular/fire/auth';
 import { Post } from '../models/post.model';
 
@@ -31,14 +30,13 @@ interface TagFrequencies {
 })
 export class PostService {
   private firestore: Firestore = inject(Firestore);
-  private fireStorage: FireStorageMngService = inject(FireStorageMngService);
   private auth: Auth = inject(Auth);
   private ngZone: NgZone = inject(NgZone); // ✅ Inyectamos NgZone
 
   /**
    * Crea un nuevo post en Firestore
    */
-  async createPost(
+  /* async createPost(
     content: string,
     images: File[],
     itineraryURL: string,
@@ -77,7 +75,44 @@ export class PostService {
       });
       throw error;
     }
-  }
+  } */
+
+    async createPost(
+      content: string,
+      imageURLs: string[],
+      itineraryURL: string,
+      travelType: string[],
+      budget: string,
+      weather: string
+    ): Promise<string> {
+      try {
+        const currentUser = this.auth.currentUser;
+        if (!currentUser) throw new Error('Usuario no autenticado');
+
+        const newPost: Post = {
+          authorId: currentUser.uid,
+          content,
+          budget,
+          commentsCount: 0,
+          createdAt: serverTimestamp() as FieldValue,
+          imageURLs,
+          itineraryURL,
+          likedBy: [],
+          likes: 0,
+          travelType,
+          weather
+        };
+
+        const docRef = await addDoc(collection(this.firestore, 'posts'), newPost);
+        return docRef.id;
+      } catch (error) {
+        this.ngZone.run(() => {
+          console.error('Error al crear el post:', error);
+        });
+        throw error;
+      }
+    }
+
 
   /**
    * Obtiene los posts de los usuarios que sigue el usuario actual

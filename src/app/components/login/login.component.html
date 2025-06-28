@@ -1,28 +1,35 @@
-<div id="title-container">
-  <h1 id="title">Iniciar Sesión</h1>
+<app-header></app-header>
+
+<div class="login-wrapper">
+  <div class="branding">
+    <img [src]="global.logo" alt="Logo Visity" class="logo" />
+    <span class="brand-name">Visity</span>
+  </div>
+
+  <div class="login-card">
+    <h2>Iniciar Sesión</h2>
+    <form [formGroup]="formLogin" (ngSubmit)="loginAction()">
+      <label for="email">Email:</label>
+      <input type="email" id="email" formControlName="email" required>
+      <div class="alert-danger" *ngIf="email.invalid && email.touched">
+        <span *ngIf="email.hasError('required')">El email es obligatorio</span>
+        <span *ngIf="email.hasError('email')">El email no es válido</span>
+      </div>
+
+      <label for="password">Contraseña:</label>
+      <input type="password" id="password" formControlName="password" required>
+      <div class="alert-danger" *ngIf="password.invalid && password.touched">
+        <span *ngIf="password.hasError('required')">La contraseña es obligatoria</span>
+        <span *ngIf="password.hasError('minlength')">La contraseña debe tener al menos 6 caracteres</span>
+      </div>
+
+      <div class="action-buttons">
+        <a routerLink="/register">¿No tienes cuenta? Regístrate</a>
+        <a href="#" id="reset-password" (click)="resetPassword()">¿Olvidaste tu contraseña?</a>
+        <button type="submit" [disabled]="formLogin.invalid">Iniciar Sesión</button>
+      </div>
+
+      <p id="temporary-message-login">{{ temporaryMessage }}</p>
+    </form>
+  </div>
 </div>
-
-<div id="form-container">
-  <form [formGroup]="formLogin" (ngSubmit)="loginAction()">
-    <label for="email">Email:</label>
-    <input type="email" id="email" formControlName="email" required>
-    <div class="alert-danger" *ngIf="email.invalid && email.touched">
-      <span *ngIf="email.hasError('required')">El email es obligatorio</span>
-      <span *ngIf="email.hasError('email')">El email no es válido</span>
-    </div>
-
-    <label for="password">Contraseña:</label>
-    <input type="password" id="password" formControlName="password" required>
-    <div class="alert-danger" *ngIf="password.invalid && password.touched">
-      <span *ngIf="password.hasError('required')">La contraseña es obligatoria</span>
-      <span *ngIf="password.hasError('minlength')">La contraseña debe tener al menos 6 caracteres</span>
-    </div>
-
-    <a routerLink="/register">Registrarse</a>
-    <a href="#" id="reset-password" (click)="resetPassword()">¿Olvidaste tu contraseña?</a>
-    <button type="submit" class="user-button" [disabled]="formLogin.invalid">Iniciar Sesión</button>
-  </form>
-  <p id="temporary-message-login">{{ temporaryMessage }}</p>
-</div>
-
-<!-- <img src="{{imageUrl}}" alt="Imagen desde Firebase Storage"> -->

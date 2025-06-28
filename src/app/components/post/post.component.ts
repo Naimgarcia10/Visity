@@ -4,17 +4,18 @@ import { Post } from '../../models/post.model';
 import { AuthService } from '../../shared/auth.service';
 import { PostService } from '../../shared/post.service';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-post',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './post.component.html',
   styleUrls: ['./post.component.css']
 })
 export class PostComponent {
   @Input() post!: Post;  
-   @Output() liked = new EventEmitter<void>(); // ✅ Nuevo evento
+  @Output() liked = new EventEmitter<void>(); // ✅ Nuevo evento
   authorUsername: string | null = null;
   authorProfilePicture: string | null = null;
   currentImageIndex: number = 0;
