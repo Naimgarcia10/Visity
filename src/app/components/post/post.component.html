@@ -1,18 +1,5 @@
 <div class="post-card">
-  <!-- <div class="post-header">
-    <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
-    <span class="author-id">{{ authorUsername }}</span>
-    <small class="post-date">{{ postTimeAgo }}</small>
-  </div> -->
-
   <div class="post-header">
-    <!-- <a [routerLink]="['/profile', authorUsername]" class="profile-link">
-      <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
-    </a>
-
-    <a [routerLink]="['/profile', authorUsername]" class="author-id">
-      {{authorUsername }}
-    </a> -->
     <a [routerLink]="['/profile', authorUsername]" class="profile-link">
     <div class="user-info">
         <img class="profile-pic" [src]="authorProfilePicture" alt="Foto de perfil"/>
@@ -68,9 +55,10 @@
         {{ post.likes }}
       </button>
       <span class="comment-count">💬 {{ comments.length }}</span>
+      <div class="delete-post" *ngIf="canDelete">
+        <button class="delete-post-btn" (click)="deletePost()">🗑️ Eliminar post</button>
+      </div>
     </div>
-
-
 
     <div class="comments">
       <div class="comment" *ngFor="let c of comments">

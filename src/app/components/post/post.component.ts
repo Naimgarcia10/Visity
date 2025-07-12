@@ -23,8 +23,8 @@ export class PostComponent {
   postTimeAgo: string | null = null;
   currentUserId: string | null = null;
   hasLiked: boolean = false;
-
-  // 🔽 Comentarios
+  canDelete: boolean = false;
+  @Output() deleted = new EventEmitter<void>();
   comments: any[] = [];
   commentText: string = '';
   authorNames: { [userId: string]: string } = {};
@@ -47,9 +47,10 @@ export class PostComponent {
         this.currentUserId = user?.uid || null;
         this.hasLiked = this.post.likedBy?.includes(this.currentUserId || '') || false;
 
-        await this.loadComments(); // ✅ Cargar comentarios al iniciar
+        await this.loadComments(); 
       }
     }
+    this.canDelete = this.currentUserId === this.post.authorId;
   }
 
   nextImage() {
@@ -85,11 +86,10 @@ export class PostComponent {
     await this.postService.toggleLike(this.post.id, this.currentUserId);
     this.hasLiked = !this.hasLiked;
     this.post.likes += this.hasLiked ? 1 : -1;
-
     this.liked.emit();
   }
 
-  // 🔽 Cargar comentarios del post
+  // Cargar comentarios del post
   async loadComments() {
   if (!this.post?.id) return;
   this.comments = await this.postService.getComments(this.post.id);
@@ -104,13 +104,25 @@ export class PostComponent {
   }
 }
 
-
-  // 🔽 Añadir un nuevo comentario
+  // Añadir un nuevo comentario
   async addComment() {
     if (!this.commentText.trim() || !this.currentUserId || !this.post?.id) return;
 
     await this.postService.addComment(this.post.id, this.currentUserId, this.commentText.trim());
     this.commentText = '';
     await this.loadComments(); // recargar comentarios tras añadir
+  }
+
+  async deletePost() {
+    const confirmDelete = confirm('¿Seguro que deseas eliminar este post?');
+    if (!confirmDelete || !this.post.id) return;
+
+    try {
+      await this.postService.deletePost(this.post.id);
+      this.deleted.emit(); 
+    } catch (error) {
+      console.error('Error al eliminar post:', error);
+      alert('Error al eliminar el post.');
+    }
   }
 }

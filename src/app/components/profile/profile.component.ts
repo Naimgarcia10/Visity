@@ -209,4 +209,9 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  onPostDeleted(postId: string) {
+    this.userPosts = this.userPosts.filter(post => post.id !== postId);
+    this.postCount = this.userPosts.length;
+  }
+
 }

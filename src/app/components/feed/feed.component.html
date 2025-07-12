@@ -6,7 +6,6 @@
     <app-user-search (followingChanged)="refreshFeed()"></app-user-search>
     <app-suggested-users (followingChanged)="refreshFeed()"></app-suggested-users>
 
-    <!-- ✅ Botón dentro de la columna izquierda -->
     <div class="create-post-button-inside">
       <button (click)="showCreatePostButton = true">➕ Crear Post</button>
     </div>
@@ -19,7 +18,7 @@
     </ng-container>
 
     <ng-container *ngIf="filteredPosts.length > 0">
-      <app-post *ngFor="let post of filteredPosts" [post]="post" (liked)="onPostLiked()"></app-post>
+      <app-post *ngFor="let post of filteredPosts" [post]="post" (liked)="onPostLiked()" (deleted)="onPostDeleted(post.id!)"></app-post>
     </ng-container>
   </div>
 
@@ -33,5 +32,5 @@
 <div class="overlay-backdrop" *ngIf="showCreatePostButton" (click)="closeCreatePost()"></div>
 
 <div class="create-post-modal" *ngIf="showCreatePostButton">
-  <app-create-post (postCreated)="onPostCreated()" (close)="closeCreatePost()"></app-create-post>
+  <app-create-post (onPostCreated)="onPostCreated()" (close)="closeCreatePost()"></app-create-post>
 </div>

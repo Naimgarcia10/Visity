@@ -224,6 +224,27 @@ a.author-id:hover {
   background-color: #005caa;
 }
 
+.delete-post {
+  margin-left: auto;
+  text-align: right;
+  margin-top: 0.5rem;
+}
+
+.delete-post-btn {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.delete-post-btn:hover {
+  background-color: #f1b0b7;
+}
+
 .tags {
   display: flex;
   flex-direction: column;

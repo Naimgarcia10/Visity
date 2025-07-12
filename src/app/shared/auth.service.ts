@@ -184,7 +184,7 @@ async getUserById(userId: string): Promise<UserModel | null> {
         // Eliminar cada imagen del Storage
         const imageDeletionPromises = imageURLs.map(async (url) => {
           try {
-            const storageRef = this.fireStorage.getStorage(); // acceso público al storage
+            const storageRef = this.fireStorage.getStorage(); 
             const decodedUrl = decodeURIComponent(new URL(url).pathname);
             const path = decodedUrl.split('/o/')[1]?.split('?')[0]; 
             const refToDelete = ref(storageRef, path);

@@ -5,7 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GoogleMapsService, Waypoint } from '../../shared/maps.service';
-import { PostService } from '../../shared/post.service'; // Importar el servicio
+import { PostService } from '../../shared/post.service';
 import { FileToUrlPipe } from '../../shared/global.service';
 import { FireStorageMngService } from '../../shared/fire-storage-mng.service';
 
@@ -237,58 +237,6 @@ export class CreatePostComponent implements OnInit {
     ].filter(tag => tag !== '');
   }
 
-  /**
-   * Maneja el evento de carga de imágenes desde un input de tipo archivo.
-   * 
-   * @param event - El evento generado al seleccionar archivos.
-   * 
-   * - Limita la cantidad de imágenes seleccionadas a un máximo de 10.
-   * - Guarda los archivos seleccionados en la propiedad `imageFiles`.
-   * - Usa la primera imagen seleccionada como vista previa y genera su URL.
-   * - Muestra un mensaje informativo si se seleccionan múltiples imágenes.
-   * 
-   * @remarks
-   * Si se seleccionan más de 10 imágenes, se muestra un mensaje de advertencia
-   * y no se procesan los archivos.
-   */
-    /* onImageUpload(event: any): void {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const newFiles = Array.from(files) as File[];
-
-    // Unir los nuevos con los ya existentes
-    const combinedFiles: File[] = [...this.imageFiles, ...newFiles];
-
-    // Filtrar duplicados por nombre y tamaño
-    const uniqueFiles = combinedFiles.filter((file, index, self) =>
-      index === self.findIndex(f => f.name === file.name && f.size === file.size)
-    );
-
-    const uniqueImages = combinedFiles.filter(
-        (file, index, self) =>
-          index === self.findIndex(f => f.name === file.name && f.size === file.size)
-      );
-
-    if (uniqueFiles.length > 10) {
-      this.mostrarMensaje('Solo puedes subir hasta 10 imágenes');
-      return;
-    }
-
-    this.imageFiles = uniqueFiles;
-
-    // Mostrar vista previa de la primera imagen
-    this.imageFile = this.imageFiles[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.imageUrl = reader.result as string;
-    };
-    reader.readAsDataURL(this.imageFile);
-
-    if (this.imageFiles.length > 1) {
-      this.mostrarMensaje(`Se han seleccionado ${this.imageFiles.length} imágenes`);
-    }
-  } */
  onImageUpload(event: any): void {
   const files = Array.from(event.target.files || []) as File[];
 
@@ -314,86 +262,6 @@ export class CreatePostComponent implements OnInit {
     this.mostrarMensaje(`Se han seleccionado ${this.imageFiles.length} imágenes`);
   }
 }
-
-
-
-  /**
-   * Envía un nuevo post utilizando los datos proporcionados en el formulario.
-   * 
-   * Este método realiza las siguientes acciones:
-   * - Valida el formulario antes de proceder.
-   * - Obtiene los valores del formulario, incluyendo texto, tipo de viaje, presupuesto y clima.
-   * - Prepara las imágenes para subir, incluyendo la conversión de la imagen del itinerario si está disponible.
-   * - Llama al servicio `postService` para crear el post con los datos recopilados.
-   * - Muestra mensajes de estado durante el proceso (publicando, éxito o error).
-   * - Resetea el formulario y los estados después de completar la operación.
-   * - Redirige al usuario al feed principal tras un breve retraso si la publicación es exitosa.
-   * 
-   * @returns {Promise<void>} Una promesa que se resuelve cuando el proceso de publicación se completa.
-   * 
-   * @throws {Error} Si ocurre un error durante la creación del post, se captura y se muestra un mensaje de error al usuario.
-   */
-  /* async submitPost(): Promise<void> {
-  if (this.postForm.valid) {
-    try {
-      this.isSubmitting = true;
-      this.statusMessage = 'Publicando...';
-      this.showStatusMessage = true;
-
-      // Obtener los valores del formulario
-      const content = this.postForm.get('text')?.value;
-      const tipoViaje = this.postForm.get('tipoViaje')?.value || [];
-      const presupuesto = this.selectedPresupuesto || '';
-      const clima = this.selectedClima || '';
-
-      // Crear array con imágenes seleccionadas
-      let imagesToUpload: File[] = [...this.imageFiles];
-
-      // Añadir imagen del itinerario si existe
-      if (this.itinerarioImagenUrl) {
-        try {
-          const response = await fetch(this.itinerarioImagenUrl);
-          const blob = await response.blob();
-          const itineraryFile = new File([blob], 'itinerary.png', { type: 'image/png' });
-          imagesToUpload.push(itineraryFile);
-        } catch (error) {
-          console.error('Error al convertir la imagen del itinerario:', error);
-        }
-      }
-
-      // 🔍 Filtrar imágenes duplicadas por nombre + tamaño
-      const uniqueImages = imagesToUpload.filter(
-        (file, index, self) =>
-          index === self.findIndex(f => f.name === file.name && f.size === file.size)
-      );
-
-      // Subir post con imágenes únicas
-      const postId = await this.postService.createPost(
-        content,
-        uniqueImages,
-        this.googleMapsUrl || '',
-        tipoViaje,
-        presupuesto,
-        clima
-      );
-
-      console.log('Post creado con ID:', postId);
-      this.mostrarMensaje('¡Post publicado con éxito!', 2000);
-
-      this.resetFormAndStates();
-
-      // Redirigir al feed tras 2 segundos
-      setTimeout(() => {
-        this.router.navigate(['/feed']);
-      }, 2000);
-    } catch (error) {
-      console.error('Error al crear el post:', error);
-      this.mostrarMensaje('Error al publicar el post. Por favor, inténtalo de nuevo.', 3000);
-    } finally {
-      this.isSubmitting = false;
-    }
-  }
-} */
 
   async submitPost(): Promise<void> {
     if (!this.postForm.valid || this.isSubmitting) return;
@@ -437,7 +305,9 @@ export class CreatePostComponent implements OnInit {
 
       this.statusMessage = '¡Post publicado!';
       this.resetFormAndStates();
-      this.onPostCreated.emit(); // si usas EventEmitter
+      setTimeout(() => {
+        this.onPostCreated.emit(); 
+      }, 2000);
     } catch (error) {
       this.mostrarMensaje('Error al publicar el post');
       console.error(error);
@@ -466,6 +336,8 @@ export class CreatePostComponent implements OnInit {
  */
  resetFormAndStates(): void {
     this.postForm.reset();
+    this.selectedPresupuesto = null;
+    this.selectedClima = null;
     this.tags.tipoViaje.forEach(tag => (tag.selected = false));
     this.tags.presupuesto.forEach(tag => (tag.selected = false));
     this.tags.clima.forEach(tag => (tag.selected = false));

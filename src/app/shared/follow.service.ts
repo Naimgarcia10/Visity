@@ -137,46 +137,6 @@ export class FollowService {
     );
   }
 
-  
-  /**
-   * Obtiene el ID de usuario correspondiente a un nombre de usuario dado.
-   *
-   * @param username - El nombre de usuario del cual se desea obtener el ID.
-   * @returns Un observable que emite el ID del usuario como una cadena, o `null` si no se encuentra el usuario.
-   * 
-   * @remarks
-   * Este método consulta la colección de usuarios en Firestore para buscar un documento
-   * cuyo campo `username` coincida con el nombre de usuario proporcionado. Si no se encuentra
-   * ningún usuario, el observable emitirá `null`. En caso de error durante la consulta, se
-   * captura el error y el observable también emitirá `null`.
-   * 
-   * @example
-   * ```typescript
-   * followService.getUserIdByUsername('naim123').subscribe(userId => {
-   *   if (userId) {
-   *     console.log(`El ID del usuario es: ${userId}`);
-   *   } else {
-   *     console.log('Usuario no encontrado');
-   *   }
-   * });
-   * ```
-   */
-  private getUserIdByUsername(username: string): Observable<string | null> {
-    const usersRef = collection(this.firestore, 'users');
-    const q = query(usersRef, where('username', '==', username));
-    
-    return from(getDocs(q)).pipe(
-      map(snapshot => {
-        if (snapshot.empty) return null;
-        return snapshot.docs[0].id;
-      }),
-      catchError(error => {
-        console.error(`Error al buscar usuario ${username}:`, error);
-        return of(null);
-      })
-    );
-  }
-
   async searchUsersByUsername(search: string, excludeUsername: string): Promise<any[]> {
     const usersRef = collection(this.firestore, 'users');
     const snapshot = await getDocs(usersRef);

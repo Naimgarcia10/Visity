@@ -42,49 +42,6 @@ export class LoginComponent implements OnInit {
     return this.formLogin.get('password') as FormControl;
   }
 
-  /**
-   * Maneja la acción de inicio de sesión del usuario.
-   * 
-   * Este método verifica si el formulario de inicio de sesión es válido y, 
-   * en caso afirmativo, intenta autenticar al usuario utilizando las credenciales 
-   * proporcionadas (correo electrónico y contraseña). Si la autenticación es exitosa, 
-   * se almacena la información del usuario en la sesión y se redirige al usuario 
-   * a la página de inicio después de un breve mensaje temporal. En caso de error, 
-   * se muestra un mensaje temporal indicando el problema específico.
-   * 
-   * @returns {Promise<void>} Una promesa que se resuelve cuando la acción de inicio de sesión se completa.
-   
-  async loginAction(): Promise<void> {
-    if (this.formLogin.valid) {
-      const email = this.formLogin.get('email')!.value;
-      const password = this.formLogin.get('password')!.value;
-
-        try {
-        await this.authService.login(email, password);
-        this.formLogin.reset();
-        this.temporaryMessage = 'Inicio de sesión exitoso';  
-        
-        setTimeout(() => {
-          this.temporaryMessage = '';
-          this.router.navigate(['/feed']);
-        }, 3000);
-      } catch (error: any) {
-        const errorCode = error.code;
-        if (errorCode === 'auth/user-not-found') {
-          this.temporaryMessage = 'El usuario no existe';
-        } else if (errorCode === 'auth/wrong-password') {
-          this.temporaryMessage = 'La contraseña es incorrecta';
-        } else if (errorCode === 'auth/invalid-email') {
-          this.temporaryMessage = 'El correo no es válido';
-        } else if (errorCode === 'auth/invalid-credential') {
-        this.temporaryMessage = 'Las credenciales no son válidas';
-      } else {
-          this.temporaryMessage = error.message;
-        }
-      }
-    }
-  }
-  */
 
   async loginAction(): Promise<void> {
   if (this.formLogin.valid) {

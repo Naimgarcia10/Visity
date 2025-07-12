@@ -14,10 +14,13 @@ import {
   arrayRemove,
   arrayUnion,
   updateDoc,
-  limit
+  limit,
+  deleteDoc
 } from '@angular/fire/firestore';
 import { Auth } from '@angular/fire/auth';
 import { Post } from '../models/post.model';
+import { deleteObject, ref as storageRef } from '@angular/fire/storage';
+import { Storage } from '@angular/fire/storage';
 
 interface TagFrequencies {
   travelType: Record<string, number>;
@@ -31,51 +34,8 @@ interface TagFrequencies {
 export class PostService {
   private firestore: Firestore = inject(Firestore);
   private auth: Auth = inject(Auth);
-  private ngZone: NgZone = inject(NgZone); // ✅ Inyectamos NgZone
-
-  /**
-   * Crea un nuevo post en Firestore
-   */
-  /* async createPost(
-    content: string,
-    images: File[],
-    itineraryURL: string,
-    travelType: string[],
-    budget: string,
-    weather: string
-  ): Promise<string> {
-    try {
-      const currentUser = this.auth.currentUser;
-      if (!currentUser) throw new Error('Usuario no autenticado');
-
-      const imageUploadPromises = images.map(image =>
-        this.fireStorage.uploadFile(image, 'posts')
-      );
-      const imageURLs = await Promise.all(imageUploadPromises);
-
-      const newPost: Post = {
-        authorId: currentUser.uid,
-        content,
-        budget,
-        commentsCount: 0,
-        createdAt: serverTimestamp() as FieldValue,
-        imageURLs,
-        itineraryURL,
-        likedBy: [],
-        likes: 0,
-        travelType,
-        weather
-      };
-
-      const docRef = await addDoc(collection(this.firestore, 'posts'), newPost);
-      return docRef.id;
-    } catch (error) {
-      this.ngZone.run(() => {
-        console.error('Error al crear el post:', error);
-      });
-      throw error;
-    }
-  } */
+  private ngZone: NgZone = inject(NgZone); 
+  private storage: Storage = inject(Storage);
 
     async createPost(
       content: string,
@@ -245,36 +205,6 @@ export class PostService {
     }
   }
 
-  /**
- * Extrae los tags más frecuentes (travelType, budget, weather) del usuario a partir de sus posts y likes.
- */
-  async getUserPreferenceTags(uid: string): Promise<TagFrequencies> {
-  const userPosts = await this.getPostsByUser(uid);
-  if (!userPosts || userPosts.length === 0) {
-    return {
-      travelType: {},
-      budget: {},
-      weather: {}
-    };
-  }
-
-  const travelTypeFreq: Record<string, number> = {};
-  const budgetFreq: Record<string, number> = {};
-  const weatherFreq: Record<string, number> = {};
-
-  for (const post of userPosts) {
-    post.travelType?.forEach((tag: string) => travelTypeFreq[tag] = (travelTypeFreq[tag] || 0) + 1);
-    if (post.budget) budgetFreq[post.budget] = (budgetFreq[post.budget] || 0) + 1;
-    if (post.weather) weatherFreq[post.weather] = (weatherFreq[post.weather] || 0) + 1;
-  }
-
-  return {
-    travelType: travelTypeFreq,
-    budget: budgetFreq,
-    weather: weatherFreq
-  };
-}
-
 /**
  * Obtiene todos los posts de un usuario por su UID
  */
@@ -296,32 +226,6 @@ async getPostsByUser(uid: string): Promise<Post[]> {
   }
 }
 
-
-
-  private addTagsToMap(allTags: any, data: any) {
-    // travelType puede ser un array
-    if (Array.isArray(data.travelType)) {
-      data.travelType.forEach((tag: string) => {
-        allTags.travelType.set(tag, (allTags.travelType.get(tag) || 0) + 1);
-      });
-    }
-
-    if (typeof data.budget === 'string') {
-      allTags.budget.set(data.budget, (allTags.budget.get(data.budget) || 0) + 1);
-    }
-
-    if (typeof data.weather === 'string') {
-      allTags.weather.set(data.weather, (allTags.weather.get(data.weather) || 0) + 1);
-    }
-  }
-
-  private getTopTags(tagMap: Map<string, number>, topN: number): string[] {
-    return [...tagMap.entries()]
-      .sort((a, b) => b[1] - a[1]) // ordenar por frecuencia
-      .slice(0, topN)
-      .map(([tag]) => tag);
-  }
-
   /**
  * Devuelve los IDs de autores de los posts que el usuario actual ha dado like
  */
@@ -340,4 +244,30 @@ async getPostsByUser(uid: string): Promise<Post[]> {
 
     return Array.from(likedAuthors);
   }
+
+  async deletePost(postId: string): Promise<void> {
+    const postRef = doc(this.firestore, 'posts', postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) throw new Error('Post no encontrado');
+
+    const postData = postSnap.data();
+    const imageURLs: string[] = postData['imageURLs'] || [];
+
+    // Eliminar imágenes del storage
+    const deletePromises = imageURLs.map(url => {
+      const path = this.extractPathFromUrl(url);
+      return deleteObject(storageRef(this.storage, path));
+    });
+
+    await Promise.allSettled(deletePromises);
+    await deleteDoc(postRef);
+  }
+
+  private extractPathFromUrl(url: string): string {
+    const matches = url.match(/\/o\/(.*?)\?alt=media/);
+    if (!matches || !matches[1]) throw new Error('URL no válida');
+    return decodeURIComponent(matches[1]); 
+  }
+
 }

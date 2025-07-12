@@ -42,6 +42,8 @@ showCreatePostButton = false;
 coldStartPosts: Post[] = [];
 isColdStart: boolean = false;
 @ViewChild(SuggestedUsersComponent) suggestedUsersComp!: SuggestedUsersComponent;
+@ViewChild(CreatePostComponent) createPostComp!: CreatePostComponent;
+
 
 
   constructor(
@@ -120,10 +122,9 @@ applyFiltersReturn(
   });
 }
 
-
   closeCreatePost() {
     this.showCreatePostButton = false;
-  }
+  } 
 
   onPostCreated() {
     this.closeCreatePost();
@@ -135,4 +136,10 @@ applyFiltersReturn(
       this.suggestedUsersComp.refreshSuggestions(); 
     }
   }
+
+  onPostDeleted(postId: string) {
+  this.posts = this.posts.filter(post => post.id !== postId);
+  this.filteredPosts = this.filteredPosts.filter(post => post.id !== postId);
+  }
+
 }

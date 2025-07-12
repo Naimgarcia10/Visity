@@ -31,18 +31,33 @@ export class SuggestedUsersComponent implements OnInit {
     if (user) {
       const username = await this.authService.getUsernameById(user.uid);
       if (username) this.currentUsername = username;
-      this.suggestions = await this.matchingService.getSuggestedUsers(user.uid);
+      this.suggestions = await this.loadSuggestionsWithFollowStatus(user.uid);
     }
     this.loading = false;
-    this.suggestions.forEach(user => {
-      user.isFollowed = false; 
-      this.followService.isFollowing(this.currentUsername, user.username).subscribe(isFollowed => {
-        user.isFollowed = isFollowed; 
-      });
-    });
-
-
   }
+
+  async refreshSuggestions() {
+    this.loading = true;
+    const user = await this.authService.getCurrentUser();
+    if (user) {
+      this.suggestions = await this.loadSuggestionsWithFollowStatus(user.uid);
+    }
+    this.loading = false;
+  }
+
+  async loadSuggestionsWithFollowStatus(uid: string) {
+    const rawSuggestions = await this.matchingService.getSuggestedUsers(uid);
+    const currentUsername = await this.authService.getUsernameById(uid);
+    this.currentUsername = currentUsername ?? '';
+
+    return Promise.all(
+      rawSuggestions.map(async suggestion => {
+        const isFollowed = await this.followService.isFollowing(currentUsername ?? '', suggestion.username).toPromise();
+        return { ...suggestion, isFollowed };
+      })
+    );
+  }
+
 
   follow(username: string, user: any) {
     this.followService.followUserByUsername(this.currentUsername, username).subscribe({
@@ -62,14 +77,5 @@ export class SuggestedUsersComponent implements OnInit {
       },
       error: err => console.error('Error al dejar de seguir:', err)
     });
-  }
-
-  async refreshSuggestions() {
-    this.loading = true;
-    const user = await this.authService.getCurrentUser();
-    if (user) {
-      this.suggestions = await this.matchingService.getSuggestedUsers(user.uid);
-    }
-    this.loading = false;
   }
 }

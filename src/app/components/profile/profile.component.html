@@ -83,7 +83,7 @@
   <div class="user-posts">
     <h3>Tus publicaciones</h3>
     <ng-container *ngIf="userPosts.length > 0; else noPosts">
-      <app-post *ngFor="let post of userPosts" [post]="post"></app-post>
+      <app-post *ngFor="let post of userPosts" [post]="post" (deleted)="onPostDeleted(post.id!)"></app-post>
     </ng-container>
     <ng-template #noPosts>
       <p class="no-posts">Aún no has publicado ningún post.</p>
